@@ -1,19 +1,34 @@
-// frontend/src/WaitingRoom.js
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { BoardObject } from './BoardObject';
+import WebSocketService from './WebSocketService';
 
 function WaitingRoom() {
   const mountRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { gameId } = location.state || {};
-
-  // Dummy list of players (replace with actual fetch later)
-  const players = ['Player1', 'Player2'];
+  const { gameId, username } = location.state || {};
+  const [players, setPlayers] = useState([]);
 
   useEffect(() => {
+    console.log("👀 Players state updated:", players);
+    WebSocketService.connect(() => {
+      WebSocketService.subscribe(`/topic/lobby/${gameId}`, (updatedPlayers) => {
+        console.log("💡 Players from server:", updatedPlayers);
+        setPlayers(updatedPlayers); // assuming backend sends player list
+      });
+      setTimeout(() => {
+        WebSocketService.send(`/app/getLobbyPlayers`, { gameId });
+      }, 100);
+
+      WebSocketService.subscribe(`/topic/start/${gameId}`, () => {
+        navigate('/scene', { state: { gameId, username } });
+      });
+
+      WebSocketService.send(`/app/joinLobby`, { gameId, username });
+    });
+
     const width = mountRef.current.clientWidth;
     const height = mountRef.current.clientHeight;
 
@@ -34,7 +49,6 @@ function WaitingRoom() {
     scene.add(board.getObject3D());
 
     const clock = new THREE.Clock();
-
     const animate = () => {
       requestAnimationFrame(animate);
       const elapsed = clock.getElapsedTime();
@@ -50,12 +64,13 @@ function WaitingRoom() {
       if (mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
       }
+      WebSocketService.disconnect();
       renderer.dispose();
     };
-  }, []);
+  }, [gameId, username, navigate]);
 
   const handleStartGame = () => {
-    navigate('/scene', { state: { gameId } });
+    WebSocketService.send(`/app/startGame`, { gameId });
   };
 
   return (

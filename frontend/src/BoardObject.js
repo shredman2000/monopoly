@@ -105,6 +105,12 @@ export class BoardObject {
         z: 0.1
       }, Math.PI / 2);
     }
+    /*
+    this.tilePositions = this.tiles.map(tile => {
+      const worldPos = new THREE.Vector3();
+      tile.getObject3D().getWorldPosition(worldPos);
+      return worldPos;
+    });*/
   }
   
 
@@ -120,5 +126,22 @@ export class BoardObject {
 
   getTiles() {
     return this.tiles;
+  }
+
+
+
+  computeTileWorldPositions(scene) {
+    // Must be added to scene before updating world matrices
+    scene.add(this.group);
+    this.group.updateWorldMatrix(true, true);
+  
+    this.tilePositions = this.tiles.map(tile => {
+      const worldPos = new THREE.Vector3();
+      tile.getObject3D().getWorldPosition(worldPos);
+      return worldPos;
+    });
+  
+    // Optionally remove and re-add if you don't want to keep it twice
+    //scene.remove(this.group);
   }
 }

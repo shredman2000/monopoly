@@ -1,22 +1,24 @@
 package com.monopoly.backend.controllers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.monopoly.backend.models.Game;
-import com.monopoly.backend.models.User;
 import com.monopoly.backend.repository.GameRepository;
 import com.monopoly.backend.repository.UserRepository;
 import com.monopoly.backend.services.GameCreatedMessage;
 import com.monopoly.backend.services.GameSettings;
-
+import com.monopoly.backend.services.GameStateResponse;
 import com.monopoly.backend.services.JoinGameRequest;
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -32,16 +34,17 @@ public class GameController {
         this.gameRepository = gameRepository;
         this.userRepository = userRepository;
     }
-
+    
 
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/createGame")
     public ResponseEntity<GameCreatedMessage> createGame(@RequestBody GameSettings gameSettings) {
-        List<User> players = userRepository.findAllByUsernameIn(gameSettings.getPlayerUsernames());
+        String hostUsername = gameSettings.getPlayerUsernames().get(0);
 
         // check for the right number of players being passed, failsafe
 
-        Game game = new Game(players);
+        Game game = new Game();
+        game.addPlayer(hostUsername);
         gameRepository.save(game);
 
         String createdGameId = game.getGameId();
@@ -61,8 +64,6 @@ public class GameController {
             return ResponseEntity.badRequest().body("User not found.");
         }*/
 
-       User user = userRepository.findByUsername(username)
-            .orElseGet(() -> userRepository.save(new User(username , null)));
 
         Optional<Game> gameOpt = gameRepository.findById(gameId);
         if (gameOpt.isEmpty()) {
@@ -73,15 +74,70 @@ public class GameController {
 
 
         //check whether user already in game
-        boolean alreadyJoined = game.getPlayers().stream()
-        .anyMatch(p -> p.getId().equals(user.getId()));
+        List<String> joinedPlayers = game.getPlayerUsernames();
 
+        for (String joinedUsername : joinedPlayers) {
+            if (username.equals(joinedUsername)) {
+                return ResponseEntity.badRequest().body("Player already in game.");
+            }
+        }
 
-        game.getPlayers().add(user);
-        game.getPlayerUsernames().add(user.getUsername());
-        game.setNumPlayers(game.getPlayers().size());
+        game.addPlayer(username);
+        //game.setNumPlayers(joinedPlayers.size()); test whether necessary
         gameRepository.save(game);
 
         return ResponseEntity.ok().body("Game joined successfully");
+    }
+
+
+
+    @PostMapping("/startGame")
+    public ResponseEntity startGame(@RequestBody Map<String, String> request) {
+        String gameId = request.get("gameId");
+
+        Optional<Game> gameOpt = gameRepository.findById(gameId);
+
+
+        if (gameOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("gameId does not exist");
+        }
+
+        Game game = gameOpt.get();
+        game.setStarted(true);
+        gameRepository.save(game);
+
+        return ResponseEntity.ok("Game started");
+    }
+
+    
+
+
+    /**
+     * @return
+     * players positions
+     * turn # or which player
+     * each players balance
+     * 
+     */
+    @GetMapping("/getGameState/{gameId}")
+    public ResponseEntity<?> getGameState(@PathVariable String gameId) {
+        Optional<Game> gameOpt = gameRepository.findById(gameId);
+
+        if (gameOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Game not found.");
+        }
+
+        Game game = gameOpt.get();
+    
+        GameStateResponse gameState = new GameStateResponse(
+            game.getGameId(),
+            game.isStarted(),
+            game.getTurnIndex(),
+            game.getPlayerUsernames(),
+            game.getPlayerStates()
+        );
+
+
+        return ResponseEntity.ok(gameState);
     }
 }
