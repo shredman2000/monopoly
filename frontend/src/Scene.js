@@ -26,6 +26,7 @@ function Scene() {
    
 
     const board = new BoardObject();
+    board.getObject3D().rotation.x = -Math.PI / 2;
     scene.add(board.getObject3D());
 
     const clock = new THREE.Clock();
@@ -40,7 +41,7 @@ function Scene() {
 
      // ✅ Cleanup (safely check before using ref)
      return () => {
-      if (mountRef.current && renderer.domElement) {
+      if (mountRef.current && renderer.domElement.parentNode) {
         mountRef.current.removeChild(renderer.domElement);
       }
       renderer.dispose();
