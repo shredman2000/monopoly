@@ -32,6 +32,7 @@ const WebSocketService = {
     if (this.client && this.client.connected) {
         this.client.publish({
             destination,
+            headers: { 'content-type': 'application/json' },
             body: JSON.stringify(body),
           });
     }

@@ -1,6 +1,6 @@
 
 package com.monopoly.backend.models;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,7 +26,7 @@ public class PlayerState {
 
     @ManyToOne
     @JoinColumn(name = "game_id")
-    @JsonIgnore
+    @JsonBackReference
     private Game game;
 
 

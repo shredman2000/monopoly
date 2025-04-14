@@ -1,6 +1,10 @@
 package com.monopoly.backend.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -11,6 +15,10 @@ import jakarta.persistence.Table;
 public class TileState {
 
     @Id
+    @GeneratedValue 
+    private Long id; // just used for chance and community chest stuff
+
+    @Column
     private String tileName;
 
     private int price;
@@ -25,33 +33,44 @@ public class TileState {
 
     private String type; //property, railroad, utility, tax, go....
     
+    private int tileIndex;
 
     private int houseCost;
     private int rent0House;
     private int rent1House;
     private int rent2House;
     private int rent3House;
+    private int rent4House;
     private int rentHotel;
     private int costToMortgage;
 
+
+    private int cost1Owned;
+    private int cost2Owned;
+    private int cost3Owned;
+    private int cost4Owned;
+
     @ManyToOne
     @JoinColumn(name = "game_id")
+    @JsonBackReference
     private Game game;
 
     public TileState() {}
 
     //constructor for non ownable tiles [GO, jail, income tax, free parking, luxury tax, community chest, chance]
-    public TileState(String tileName, String type, Game game) {
+    public TileState(String tileName, String type, int tileIndex, Game game) {
         this.tileName = tileName;
         this.type = type;
         this.game = game;
+        this.tileIndex = tileIndex;
     }
 
     // constructor for ownable tiles
-    public TileState(String tileName, String type, int price, Game game, int houseCost, int rent0House, 
-        int rent1House, int rent2House, int rent3House, int rentHotel, int costToMortgage) {
+    public TileState(String tileName, String type, int tileIndex, int price, Game game, int houseCost, int rent0House, 
+        int rent1House, int rent2House, int rent3House, int rent4House, int rentHotel, int costToMortgage) {
         this.tileName = tileName;
         this.type = type;
+        this.tileIndex = tileIndex;
         this.price = price;
         this.game = game;
         this.owned = false;
@@ -61,12 +80,37 @@ public class TileState {
         this.rent1House = rent1House;
         this.rent2House = rent2House;
         this.rent3House = rent3House;
+        this.rent4House = rent4House;
         this.rentHotel = rentHotel;
         this.costToMortgage = costToMortgage;
         this.mortgaged = false;
         this.houseCount = 0;
     }  
 
+    //constructor for railroads
+    public TileState(String tileName, String type, int tileIndex, int price, Game game, int rent1, int rent2, int rent3, int rent4, int costToMortgage) {
+        this.tileName = tileName;
+        this.type = type;
+        this.tileIndex = tileIndex;
+        this.price = price;
+        this.game = game;
+        this.owned = false;
+        this.ownerUsername = null;
+        this.costToMortgage = costToMortgage;
+        this.mortgaged = false;
+
+        // reuse fields
+        this.rent0House = rent1;  // 1 RR owned
+        this.rent1House = rent2;  // 2 RR owned
+        this.rent2House = rent3;  // 3 RR owned
+        this.rent3House = rent4;  // 4 RR owned
+
+        // Set unused fields to 0 
+        this.houseCost = 0;
+        this.rent4House = 0;
+        this.rentHotel = 0;
+        this.houseCount = 0;
+    }
 
     public void setTileName(String tileName) {
         this.tileName = tileName;
@@ -80,6 +124,13 @@ public class TileState {
     }
     public void setPrice(int price) {
         this.price = price;
+    }
+
+    public int getTileIndex() {
+        return tileIndex;
+    }
+    public void setTileIndex(int tileIndex) {
+        this.tileIndex = tileIndex;
     }
 
     public String getOwnerUsername() {
@@ -156,6 +207,14 @@ public class TileState {
         this.rent3House = rent3House;
     }
 
+    public int getRent4House() {
+        return rent4House;
+    }
+
+    public void setRent4House(int rent4House) {
+        this.rent4House = rent4House;
+    }
+
     public int getRentHotel() {
         return rentHotel;
     }
@@ -178,5 +237,7 @@ public class TileState {
     public void setType(String type) {
         this.type = type;
     }
+
+    
 
 }

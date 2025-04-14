@@ -7,13 +7,14 @@ import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import com.monopoly.backend.models.Game;
 import com.monopoly.backend.models.PlayerState;
+import com.monopoly.backend.models.TileState;
 import com.monopoly.backend.repository.GameRepository;
+import com.monopoly.backend.services.GameService;
 
 @Controller
 public class GameSocketController {
@@ -24,23 +25,13 @@ public class GameSocketController {
     @Autowired
     private GameRepository gameRepository;
 
-    // receives from /app/gameState
-    @MessageMapping("/playerMove")
-    @SendTo("/topic/gameUpdates")
-    public Game handlePlayerMove(PlayerMoveMessage move) {
-        Game game = gameRepository.findById(move.getGameId()).orElse(null);
-        if (game == null) return null;
+    @Autowired
+    private GameService gameService;
 
-        for (PlayerState playerState : game.getPlayerStates()) {
-            if (playerState.getUsername().equals(move.getUsername())) {
-                playerState.setPosition(playerState.getPosition() + move.getSteps());
-            }
-        }
-        gameRepository.save(game);
-        return game;
-    }
-
-    
+    /**
+     * websocket for joining a lobby
+     * @return messageTemplate of game usernames and gameId
+     */
     @MessageMapping("/joinLobby")
     public void handleJoinLobby(Map<String, String> joinMsg) {
         String gameId = joinMsg.get("gameId");
@@ -48,31 +39,36 @@ public class GameSocketController {
 
         // Broadcast to all players in the game lobby
         Game game = gameRepository.findById(gameId).orElse(null);
-
+        if (game.getNumPlayers() == 6) {
+            System.out.println("Game full");
+            return;
+        }
         if (!game.getPlayerUsernames().contains(username)) {
             game.addPlayer(username);
             gameRepository.save(game);
         }
-
-        
         System.out.println("Broadcasting players: " + game.getPlayerUsernames());
         messagingTemplate.convertAndSend("/topic/lobby/" + gameId, game.getPlayerUsernames());
     }
 
+    /**
+     * websocket for returning the list of lobby players
+     * @return players in lobby
+     */
     @MessageMapping("/getLobbyPlayers")
     public void getLobbyPlayers(Map<String, String> msg) {
         String gameId = msg.get("gameId");
         System.out.println("Requesting lobby players");
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) return;
-        
-
         System.out.println("Broadcasting players from /getLobbyPlayers: " + game.getPlayerUsernames());
 
         messagingTemplate.convertAndSend("/topic/lobby/" + gameId, game.getPlayerUsernames());
     }
 
-
+    /**
+     * unsure whether this is being used or the rest endpoint
+     */
     @MessageMapping("/startGame")
     public void handleStartGame(Map<String, String> msg) {
         String gameId = msg.get("gameId");
@@ -97,29 +93,90 @@ public class GameSocketController {
 
     @MessageMapping("/rollDice")
     public void rollDice(RollDiceRequest rollRequest) {
-        String gameId = rollRequest.getGameid();
+        System.out.println("/rollDice reached");
+        String gameId = rollRequest.getGameId();
         Game game = gameRepository.findById(gameId).orElse(null);
-        if (game == null || !game.isStarted()) return;
+        if (game == null) { 
+            return; 
+        }
+        int turnIndex = game.getTurnIndex();
+        List<PlayerState> players = game.getPlayerStates();
 
-        int turnIndex = game.getTurnIndex();    
-
-        PlayerState currPlayer = game.getPlayerStates().get(turnIndex);
+        PlayerState currPlayer = players.get(turnIndex);
 
         int dieOne = new Random().nextInt(6) + 1;
         int dieTwo = new Random().nextInt(6) + 1;
         int roll = dieOne + dieTwo;
+        System.out.println("<<<<<<<<<<" + roll);
+        int nextPos = (currPlayer.getPosition() + roll) % 40;
 
-        currPlayer.setPosition((currPlayer.getPosition() + roll) % 40);
+        // handlePlayerMove()
+        currPlayer.setPosition(nextPos);
+
+        //game.setTurnIndex((turnIndex + 1) % game.getPlayerStates().size()); // increment turn want to handle after the player does their stuff. 
+        gameRepository.save(game);
+
+        messagingTemplate.convertAndSend("/topic/rolled/" + gameId, Map.of( "username", currPlayer.getUsername(),"roll", roll,"newPosition", nextPos));
+    }
 
 
+    @MessageMapping("/handlePlayerLanding")
+    public void handlePlayerLanding(Map<String, String> msg) {
+        System.out.println("/handlePlayerLanding reached");
+        String username = msg.get("username");
+        String gameId = msg.get("gameId");
+        int newPos = Integer.parseInt(msg.get("newPosition"));
 
-        game.setTurnIndex((turnIndex + 1) % game.getPlayerStates().size()); // increment turn
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) return;
+        int turnIndex = game.getTurnIndex();
+        PlayerState currPlayer = game.getPlayerStates().get(turnIndex);
+        gameService.handlePlayerMove(game, username, newPos);
+        //currPlayer.setPosition(newPos);
+        game.setTurnIndex((game.getTurnIndex() + 1) % game.getPlayerStates().size()); // set turn index
+
         gameRepository.save(game);
 
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
-
     }
 
+    @MessageMapping("/buyProperty")
+    public void buyProperty(Map<String, String> msg) {
+        System.out.println("/buyProperty reached");
+        String username = msg.get("username");
+        String gameId = msg.get("gameId");
+        String tileName = msg.get("tileName");
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+
+        if (game == null) return;
+
+       
+         TileState tile = game.getTileStates().stream()
+            .filter(t -> tileName.equals(t.getTileName()))
+            .findFirst()
+            .orElse(null);
+        if (tile == null || tile.isOwned()) return;
+
+
+        PlayerState player = game.getPlayerStates().stream()
+            .filter(p -> username.equals(p.getUsername()))
+            .findFirst()
+            .orElse(null);
+        if (player == null) return;
+
+        int price = tile.getPrice();
+        int playerBalance = player.getMoney();
+        if (playerBalance < price) {return;}
+        player.setMoney(playerBalance - price);
+
+        tile.setOwned(true);
+        tile.setOwnerUsername(username);
+
+        gameRepository.save(game);
+        System.out.println("<<<<<< TILE BOUGHT");
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+    }
 
     @MessageMapping("/getGameState")
         public void handleGetGameState(Map<String, String> msg) {
@@ -156,7 +213,7 @@ public class GameSocketController {
 
         public RollDiceRequest() {}
 
-        public String getGameid() {
+        public String getGameId() {
             return gameId;
         }
         public void setGameId(String gameId) {

@@ -59,35 +59,25 @@ public class GameController {
     public ResponseEntity joinGame(@RequestBody JoinGameRequest joinGameRequest) {
         String username = joinGameRequest.getUsername();
         String gameId = joinGameRequest.getGameId();
-
-        /* TODO: NEED TO IMPLEMENT LOGIN / SIGNUP
-        Optional<User> userOpt = userRepository.findByUsername(username);
-        if (userOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body("User not found.");
-        }*/
-
-
         Optional<Game> gameOpt = gameRepository.findById(gameId);
         if (gameOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Game not found.");
         }
-
         Game game = gameOpt.get();
-
-
         //check whether user already in game
         List<String> joinedPlayers = game.getPlayerUsernames();
-
         for (String joinedUsername : joinedPlayers) {
             if (username.equals(joinedUsername)) {
                 return ResponseEntity.badRequest().body("Player already in game.");
             }
         }
-
+        if (game.getNumPlayers() > 5) {
+            System.out.println("Lobby full");
+            return ResponseEntity.badRequest().body("Lobby Full");
+        }
         game.addPlayer(username);
         //game.setNumPlayers(joinedPlayers.size()); test whether necessary
         gameRepository.save(game);
-
         return ResponseEntity.ok().body("Game joined successfully");
     }
 
@@ -96,18 +86,13 @@ public class GameController {
     @PostMapping("/startGame")
     public ResponseEntity startGame(@RequestBody Map<String, String> request) {
         String gameId = request.get("gameId");
-
         Optional<Game> gameOpt = gameRepository.findById(gameId);
-
-
         if (gameOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("gameId does not exist");
         }
-
         Game game = gameOpt.get();
         game.setStarted(true);
         gameRepository.save(game);
-
         return ResponseEntity.ok("Game started");
     }
 
@@ -119,7 +104,7 @@ public class GameController {
      * players positions
      * turn # or which player
      * each players balance
-     * 
+     * PROBABLY IS USING WEBSOCKET, MAY BE ABLE TO REMOVE THIS
      */
     @GetMapping("/getGameState/{gameId}")
     public ResponseEntity<?> getGameState(@PathVariable String gameId) {

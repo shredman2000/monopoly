@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { FlyControls } from 'three/examples/jsm/controls/FlyControls.js';
 import { BoardObject } from './BoardObject';
 import { GamePiece } from './GamePiece';
+import BuyPropertyPrompt from './components/BuyPropertyPrompt';
+import ShowUserInfo from './components/ShowUserInfo';
 import WebSocketService from './WebSocketService';
 import { useLocation } from 'react-router-dom';
 
@@ -14,6 +16,9 @@ function Scene() {
   const playerMapRef = useRef({});
   const [turnIndex, setTurnIndex] = useState(0);
   const [playerUsernames, setPlayerUsernames] = useState([]);
+  const [currentTileOptions, setCurrentTileOptions] = useState(null);
+  const [userBalance, setUserBalance] = useState(1500);
+  const [ownedProperties, setOwnedProperties] = useState([]);
 
   const isMyTurn = playerUsernames[turnIndex] === username;
 
@@ -72,20 +77,92 @@ function Scene() {
         piece.moveTo(pos);
         
         // look at piece whos turn it is
-        if (player.username == game.playerUsernames[game.turnIndex]) {
+        if (player.username === game.playerUsernames[game.turnIndex]) {
           camera.position.set(pos.x + 5, pos.y + 10, pos.z + 5);
           camera.lookAt(pos);
         }
 
       });
+      const currentPlayer = game.playerStates.find(p => p.username === username);
+      if (currentPlayer) {
+        setUserBalance(currentPlayer.money);
+        // Assume you have a way to determine what properties they own
+        const props = game.tileStates
+          .filter(tile => tile.ownerUsername === username)
+          .map(tile => tile.tileName);
+        setOwnedProperties(props);
+      }
     };
 
     WebSocketService.connect(() => {
+      // subscribe to game updates
       WebSocketService.subscribe(`/topic/gameUpdates/${gameId}`, renderGameState);
+      
+
+
+      //subscribe to rolls
+      // animate the user moving here 
+      WebSocketService.subscribe(`/topic/rolled/${gameId}`, ({ username: rolledUser, roll, newPosition }) => {
+        console.log(">>> /topic/rolled message received:", roll);
+        // can also display what the player rolled.
+        const numRolled = roll;
+        const piece = playerMapRef.current[rolledUser];
+        if (piece) {
+          const index = playerUsernames.indexOf(rolledUser);
+          const tilePos = board.tilePositions[newPosition];
+          const offset = new THREE.Vector3(index * 0.4, 0.2, 0);
+          const pos = new THREE.Vector3().copy(tilePos).add(offset);
+          piece.moveTo(pos);
+        }
+        
+          console.log(">>> sending to /handlePlayerLanding");
+          WebSocketService.send("/app/handlePlayerLanding", {
+            gameId: gameId.toString(),
+            username: rolledUser.toString(),
+            newPosition: newPosition.toString(),
+          });
+
+      });
+
+
+      // subscribe to tile actions
+      WebSocketService.subscribe(`/topic/tileAction/${gameId}`, (data) => {
+        console.log("Tile action received:", data);
+        
+
+        // if it is a property and is unowned
+        if (data.action === "offer_purchase" && data.player === username) {
+          // Show Buy button in UI
+          setCurrentTileOptions({
+            type: "property",
+            name: data.tileName,
+            price: data.price,
+          });
+        }
+
+        // if it is a property and is owned
+        if (data.action === "pay_rent" && data.player === username) { /////////////////// if issue later look out for "username" here
+            
+
+
+        }
+
+        if (data.action === "continue") {
+
+        }
+      });
+
 
       // 🔁 Get full game state on load
       WebSocketService.send(`/app/getGameState`, { gameId });
     });
+
+
+
+
+
+
+
 
     const clock = new THREE.Clock();
     const animate = () => {
@@ -112,6 +189,11 @@ function Scene() {
     }
   };
 
+
+
+
+
+
   return (
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
@@ -136,6 +218,29 @@ function Scene() {
           Roll Dice
         </button>
       )}
+
+      {/*Show purchase property prompt */}
+      {currentTileOptions?.type === "property" && (
+        <BuyPropertyPrompt
+          tileName={currentTileOptions.name}
+          price={currentTileOptions.price}
+          onBuy={() => {
+            WebSocketService.send("/app/buyProperty", {
+              gameId,
+              username,
+              tileName: currentTileOptions.name,
+            });
+            setCurrentTileOptions(null);
+          }}
+          onPass={() => setCurrentTileOptions(null)}
+        />
+      )}
+      <ShowUserInfo
+        username={username}
+        balance={userBalance}
+        ownedProperties={ownedProperties}
+      />
+
     </>
   );
 }
