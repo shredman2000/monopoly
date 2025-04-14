@@ -6,6 +6,7 @@ import { GamePiece } from './GamePiece';
 import BuyPropertyPrompt from './components/BuyPropertyPrompt';
 import ShowUserInfo from './components/ShowUserInfo';
 import WebSocketService from './WebSocketService';
+import UserPaysUser from './components/UserPaysUser';
 import { useLocation } from 'react-router-dom';
 
 function Scene() {
@@ -17,8 +18,10 @@ function Scene() {
   const [turnIndex, setTurnIndex] = useState(0);
   const [playerUsernames, setPlayerUsernames] = useState([]);
   const [currentTileOptions, setCurrentTileOptions] = useState(null);
-  const [userBalance, setUserBalance] = useState(1500);
+  const [userBalance, setUserBalance] = useState(1500); // if error initializing balance later check here
   const [ownedProperties, setOwnedProperties] = useState([]);
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [hasRolled, setHasRolled] = useState(false);
 
   const isMyTurn = playerUsernames[turnIndex] === username;
 
@@ -58,9 +61,12 @@ function Scene() {
 
     const renderGameState = (game) => {
       if (!game || !game.playerStates) return;
-
+      
+      
       setTurnIndex(game.turnIndex);
       setPlayerUsernames(game.playerUsernames);
+      const isNowMyTurn = game.playerUsernames[game.turnIndex] === username;
+      setHasRolled(!isNowMyTurn);
 
       game.playerStates.forEach((player, index) => {
         let piece = playerMapRef.current[player.username];
@@ -118,7 +124,7 @@ function Scene() {
           console.log(">>> sending to /handlePlayerLanding");
           WebSocketService.send("/app/handlePlayerLanding", {
             gameId: gameId.toString(),
-            username: rolledUser.toString(),
+            username: rolledUser,
             newPosition: newPosition.toString(),
           });
 
@@ -127,7 +133,7 @@ function Scene() {
 
       // subscribe to tile actions
       WebSocketService.subscribe(`/topic/tileAction/${gameId}`, (data) => {
-        console.log("Tile action received:", data);
+        console.log("[tileAction] received:", data, "| this user:", username);
         
 
         // if it is a property and is unowned
@@ -139,11 +145,21 @@ function Scene() {
             price: data.price,
           });
         }
-
         // if it is a property and is owned
         if (data.action === "pay_rent" && data.player === username) { /////////////////// if issue later look out for "username" here
-            
+          const rentToPay = data.rent;
+          const userToPay = data.owner;
 
+          console.log("Paying" + userToPay + " $" +rentToPay);
+          WebSocketService.send("/app/payUser", {
+            gameId,
+            fromUsername: username,
+            toUsername: userToPay,
+            amount: rentToPay,
+          });
+
+          setPaymentInfo({ from: username, to: userToPay, amount: rentToPay });
+          setTimeout(() => setPaymentInfo(null), 2500);
 
         }
 
@@ -182,8 +198,9 @@ function Scene() {
   }, [gameId, username]);
 
   const handleRollDice = () => {
-    if (isMyTurn) {
+    if (isMyTurn && !hasRolled) {
       WebSocketService.send(`/app/rollDice`, { gameId, username, });
+      setHasRolled(true);
     } else {
       alert("It's not your turn!");
     }
@@ -197,7 +214,7 @@ function Scene() {
   return (
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
-      {isMyTurn && (
+      {isMyTurn && !hasRolled &&(
         <button
           onClick={handleRollDice}
           style={{
@@ -232,7 +249,13 @@ function Scene() {
             });
             setCurrentTileOptions(null);
           }}
-          onPass={() => setCurrentTileOptions(null)}
+          onPass={() => {
+            setCurrentTileOptions(null);
+            WebSocketService.send("/app/finalizeTurn", {
+              gameId,
+              username
+            });
+          }}
         />
       )}
       <ShowUserInfo
@@ -240,7 +263,7 @@ function Scene() {
         balance={userBalance}
         ownedProperties={ownedProperties}
       />
-
+      {paymentInfo && (<UserPaysUser from={paymentInfo.from} to={paymentInfo.to} amount={paymentInfo.amount} />)}
     </>
   );
 }

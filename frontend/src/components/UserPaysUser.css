@@ -1,0 +1,20 @@
+.toast-container {
+    position: absolute;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    z-index: 100;
+    opacity: 0.9;
+    animation: fadeOut 3s forwards;
+  }
+  
+  @keyframes fadeOut {
+    0% { opacity: 0.9; }
+    80% { opacity: 0.9; }
+    100% { opacity: 0; }
+  }

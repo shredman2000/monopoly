@@ -113,7 +113,6 @@ public class GameSocketController {
         // handlePlayerMove()
         currPlayer.setPosition(nextPos);
 
-        //game.setTurnIndex((turnIndex + 1) % game.getPlayerStates().size()); // increment turn want to handle after the player does their stuff. 
         gameRepository.save(game);
 
         messagingTemplate.convertAndSend("/topic/rolled/" + gameId, Map.of( "username", currPlayer.getUsername(),"roll", roll,"newPosition", nextPos));
@@ -130,10 +129,9 @@ public class GameSocketController {
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) return;
         int turnIndex = game.getTurnIndex();
-        PlayerState currPlayer = game.getPlayerStates().get(turnIndex);
-        gameService.handlePlayerMove(game, username, newPos);
+        String currentUsername = game.getPlayerUsernames().get(game.getTurnIndex());
+        gameService.handlePlayerMove(game, newPos);
         //currPlayer.setPosition(newPos);
-        game.setTurnIndex((game.getTurnIndex() + 1) % game.getPlayerStates().size()); // set turn index
 
         gameRepository.save(game);
 
@@ -167,7 +165,10 @@ public class GameSocketController {
 
         int price = tile.getPrice();
         int playerBalance = player.getMoney();
-        if (playerBalance < price) {return;}
+        if (playerBalance < price) {
+            gameService.finalizeTurn(game, username);
+            return;
+        }
         player.setMoney(playerBalance - price);
 
         tile.setOwned(true);
@@ -175,17 +176,60 @@ public class GameSocketController {
 
         gameRepository.save(game);
         System.out.println("<<<<<< TILE BOUGHT");
-        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+        //messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+        gameService.finalizeTurn(game, username);
+
+    }
+
+    @MessageMapping("/payUser")
+    public void payUser(Map<String, String> msg) {
+        System.out.println("<<<<<<<<<<<REACHED PAYUSER");
+        String gameId = msg.get("gameId");
+        String fromUser = msg.get("fromUsername");
+        String toUser = msg.get("toUsername");
+        int rent = Integer.parseInt(msg.get("amount"));
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) {return;}
+
+        PlayerState payingUser = game.getPlayerStates().stream()
+            .filter(p -> p.getUsername().equals(fromUser))
+            .findFirst().orElse(null);
+
+        PlayerState userToBePaid = game.getPlayerStates().stream()
+            .filter(p -> p.getUsername().equals(toUser))
+            .findFirst().orElse(null);
+
+        if (payingUser == null || userToBePaid == null) { return; }
+
+        payingUser.setMoney(payingUser.getMoney() - rent);
+        userToBePaid.setMoney(userToBePaid.getMoney() + rent);
+
+        gameRepository.save(game);
+
+        //messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+
+        gameService.finalizeTurn(game, fromUser);
     }
 
     @MessageMapping("/getGameState")
-        public void handleGetGameState(Map<String, String> msg) {
+    public void handleGetGameState(Map<String, String> msg) {
         System.out.println("reached /getGameState");
         String gameId = msg.get("gameId");
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game != null) {
             messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
         }
+    }
+
+    @MessageMapping("/finalizeTurn")
+    public void handleFinalizeTurn(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+        String username = msg.get("username");
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) return;
+
+        gameService.finalizeTurn(game, username);
     }
 
     public static class PlayerMoveMessage {

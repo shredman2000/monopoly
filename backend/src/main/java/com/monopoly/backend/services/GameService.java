@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import com.monopoly.backend.models.Game;
 import com.monopoly.backend.models.TileState;
 import com.monopoly.backend.models.PlayerState;
-
+import com.monopoly.backend.repository.GameRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 
@@ -16,10 +16,12 @@ public class GameService {
 
     private final BoardInitializer boardInitializer;
     private SimpMessagingTemplate messagingTemplate;
+    private GameRepository gameRepository;
 
-    public GameService(BoardInitializer boardInitializer, SimpMessagingTemplate messagingTemplate) {
+    public GameService(BoardInitializer boardInitializer, SimpMessagingTemplate messagingTemplate, GameRepository gameRepository) {
         this.boardInitializer = boardInitializer;
         this.messagingTemplate = messagingTemplate;
+        this.gameRepository = gameRepository;
     }
 
     public Game createNewGame(String username) {
@@ -33,18 +35,28 @@ public class GameService {
     }
 
     /**
+     * Call this after everything that should end the players turn!!!
+     */
+    public void finalizeTurn(Game game, String username) {
+        System.out.println("finalizing turn");
+        int currentTurn = game.getTurnIndex();
+        int totalPlayers = game.getPlayerStates().size();
+        game.setTurnIndex((currentTurn + 1) % totalPlayers);
+
+        gameRepository.save(game);
+        
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
+    }
+
+    /**
      * 
      * @params 
      */
-    public void handlePlayerMove(Game game, String username, int newPos) {
-        System.out.println("reached handlePlayerMove in gameservice");
-        for (PlayerState ps : game.getPlayerStates()) {
-            if (ps.getUsername() == username) {
-                System.out.println(ps.getUsername() + " vs " + username);
-                ps.setPosition(newPos);
-                break;
-            } 
-        }
+    public void handlePlayerMove(Game game, int newPos) {
+        int turnIndex = game.getTurnIndex();
+        PlayerState ps = game.getPlayerStates().get(turnIndex);
+        String username = game.getPlayerUsernames().get(turnIndex);
+
         //retrieve tile landed on
         TileState landedTile = game.getTileStates().stream()
             .filter(tile -> tile.getTileIndex() == newPos)
@@ -57,6 +69,7 @@ public class GameService {
         Map<String, Object> response = new HashMap<>();
         switch(tileType) {
             case "go":
+                finalizeTurn(game, username);
                 break;
             case "property":
                 // if unowned, give choice to buy
@@ -75,6 +88,8 @@ public class GameService {
                     if (owner.equals(username)) {
                         // you own this
                         response.put("action", "continue");
+
+                        finalizeTurn(game, username);
                         break;
                     }
                     else {
@@ -109,27 +124,35 @@ public class GameService {
                 break;
             case "tax":
                 // calculate owed and pay, add to free parking total
+                finalizeTurn(game, username);
                 break;
             case "community_chest":
                 // draw card
+                finalizeTurn(game, username);
                 break;
             case "chance":
                 // draw card
+                finalizeTurn(game, username);
                 break;
             case "railroad":
-
+                finalizeTurn(game, username);
                 break;
             case "utility":
                 // if someone elses property, pay up.
-
+                finalizeTurn(game, username);
                 // if unowned, give choice to buy
                 break;
             case "free_parking":
                 // give player amount of money on free parking
+                finalizeTurn(game, username);
                 break;
             case "go_to_jail":
                 // update players pos to jail tile + set some ticker for 3 turns.
-                break;            
+                finalizeTurn(game, username);
+                break;          
+            case "jail":
+                finalizeTurn(game, username);
+                break;
         }
         
         
