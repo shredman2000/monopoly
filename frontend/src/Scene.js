@@ -11,9 +11,11 @@ function Scene() {
   const location = useLocation();
   const { gameId, username } = location.state || {};
 
-  const [playerMap, setPlayerMap] = useState({});
+  const playerMapRef = useRef({});
   const [turnIndex, setTurnIndex] = useState(0);
   const [playerUsernames, setPlayerUsernames] = useState([]);
+
+  const isMyTurn = playerUsernames[turnIndex] === username;
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -30,12 +32,14 @@ function Scene() {
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
     mountRef.current.appendChild(renderer.domElement);
 
+    // flying controls for building
+    /*
     const controls = new FlyControls(camera, renderer.domElement);
     controls.movementSpeed = 10;
     controls.rollSpeed = Math.PI / 24;
     controls.autoForward = false;
     controls.dragToLook = false;
-
+    */
     const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(5, 10, 5);
     scene.add(light);
@@ -45,38 +49,48 @@ function Scene() {
     scene.add(board.getObject3D());
     board.computeTileWorldPositions(scene);
 
-    const piecesByUsername = {};
     const colors = ['red', 'blue', 'green', 'yellow'];
 
-    WebSocketService.connect(() => {
-      WebSocketService.subscribe(`/topic/gameUpdates/${gameId}`, (game) => {
-        setTurnIndex(game.turnIndex);
-        setPlayerUsernames(game.playerUsernames);
+    const renderGameState = (game) => {
+      if (!game || !game.playerStates) return;
 
-        game.playerStates.forEach((player, index) => {
-          let piece = piecesByUsername[player.username];
-          if (!piece) {
-            piece = new GamePiece(colors[index % colors.length]);
-            scene.add(piece.getObject3D());
-            piecesByUsername[player.username] = piece;
-          }
-          const tilePos = board.tilePositions[player.position];
-          const offset = new THREE.Vector3(index * 0.4, 0, 0);
-          const pos = new THREE.Vector3().copy(tilePos).add(offset);
-          piece.moveTo(pos);
-        });
+      setTurnIndex(game.turnIndex);
+      setPlayerUsernames(game.playerUsernames);
 
-        setPlayerMap(piecesByUsername);
+      game.playerStates.forEach((player, index) => {
+        let piece = playerMapRef.current[player.username];
+        if (!piece) {
+          piece = new GamePiece(colors[index % colors.length]);
+          scene.add(piece.getObject3D());
+          playerMapRef.current[player.username] = piece;
+        }
+
+        // move piece to the position on the board
+        const tilePos = board.tilePositions[player.position];
+        const offset = new THREE.Vector3(index * 0.4, .2, 0);
+        const pos = new THREE.Vector3().copy(tilePos).add(offset);
+        piece.moveTo(pos);
+        
+        // look at piece whos turn it is
+        if (player.username == game.playerUsernames[game.turnIndex]) {
+          camera.position.set(pos.x + 5, pos.y + 10, pos.z + 5);
+          camera.lookAt(pos);
+        }
+
       });
+    };
 
-      // Request initial game state (optional if already pushing on /start)
-      WebSocketService.send(`/app/getLobbyPlayers`, { gameId });
+    WebSocketService.connect(() => {
+      WebSocketService.subscribe(`/topic/gameUpdates/${gameId}`, renderGameState);
+
+      // 🔁 Get full game state on load
+      WebSocketService.send(`/app/getGameState`, { gameId });
     });
 
     const clock = new THREE.Clock();
     const animate = () => {
       requestAnimationFrame(animate);
-      controls.update(clock.getDelta());
+      //controls.update(clock.getDelta());
       renderer.render(scene, camera);
     };
     animate();
@@ -91,8 +105,8 @@ function Scene() {
   }, [gameId, username]);
 
   const handleRollDice = () => {
-    if (playerUsernames[turnIndex] === username) {
-      WebSocketService.send(`/app/rollDice`, { gameId });
+    if (isMyTurn) {
+      WebSocketService.send(`/app/rollDice`, { gameId, username, });
     } else {
       alert("It's not your turn!");
     }
@@ -101,27 +115,28 @@ function Scene() {
   return (
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
-      <button
-        onClick={handleRollDice}
-        style={{
-          position: 'absolute',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          padding: '1rem 2rem',
-          fontSize: '1.2rem',
-          backgroundColor: '#007BFF',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          zIndex: 10
-        }}
-      >
-        Roll Dice
-      </button>
+      {isMyTurn && (
+        <button
+          onClick={handleRollDice}
+          style={{
+            position: 'absolute',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '1rem 2rem',
+            fontSize: '1.2rem',
+            backgroundColor: '#007BFF',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            zIndex: 10,
+          }}
+        >
+          Roll Dice
+        </button>
+      )}
     </>
   );
 }
-
 export default Scene;

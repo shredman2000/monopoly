@@ -1,5 +1,7 @@
 package com.monopoly.backend.websocket;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -75,39 +77,59 @@ public class GameSocketController {
     public void handleStartGame(Map<String, String> msg) {
         String gameId = msg.get("gameId");
         Game game = gameRepository.findById(gameId).orElse(null);
+        List<String> players = game.getPlayerUsernames();
+        Collections.shuffle(players); 
 
-        if (game != null) {
-            game.setStarted(true);
-            gameRepository.save(game);
-
-            messagingTemplate.convertAndSend("/topic/start/" + gameId, "\"start\"");
+        game.setPlayerUsernames(players);
+        game.setTurnIndex(0);
+        
+        for (PlayerState playerState : game.getPlayerStates()) { //set each players position to the first tile.
+            playerState.setPosition(0); 
         }
 
+        gameRepository.save(game);
+
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game); // send to scene.js
+        messagingTemplate.convertAndSend("/topic/start/" + gameId, true); // send to waitingroom.js
     }
 
 
 
     @MessageMapping("/rollDice")
-    public void rollDice(Map<String, String> msg) {
-        String gameId = msg.get("gameId");
-
+    public void rollDice(RollDiceRequest rollRequest) {
+        String gameId = rollRequest.getGameid();
         Game game = gameRepository.findById(gameId).orElse(null);
-        if (game == null) return;
-        
-        int steps = new Random().nextInt(6) + 1;
+        if (game == null || !game.isStarted()) return;
 
-        PlayerState currPlayer = game.getPlayerStates().get(game.getTurnIndex());
+        int turnIndex = game.getTurnIndex();    
 
-        currPlayer.setPosition((currPlayer.getPosition() + steps) % 40);
+        PlayerState currPlayer = game.getPlayerStates().get(turnIndex);
+
+        int dieOne = new Random().nextInt(6) + 1;
+        int dieTwo = new Random().nextInt(6) + 1;
+        int roll = dieOne + dieTwo;
+
+        currPlayer.setPosition((currPlayer.getPosition() + roll) % 40);
 
 
-        game.setTurnIndex((game.getTurnIndex() + 1) % game.getPlayerStates().size());
+
+        game.setTurnIndex((turnIndex + 1) % game.getPlayerStates().size()); // increment turn
         gameRepository.save(game);
 
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
 
     }
-   
+
+
+    @MessageMapping("/getGameState")
+        public void handleGetGameState(Map<String, String> msg) {
+        System.out.println("reached /getGameState");
+        String gameId = msg.get("gameId");
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game != null) {
+            messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+        }
+    }
 
     public static class PlayerMoveMessage {
         private String gameId;
@@ -125,4 +147,30 @@ public class GameSocketController {
         public int getSteps() { return steps; }
         public void setSteps(int steps) { this.steps = steps; }
     } 
+
+
+    public static class RollDiceRequest {
+        private String gameId;
+        private String userName;
+
+
+        public RollDiceRequest() {}
+
+        public String getGameid() {
+            return gameId;
+        }
+        public void setGameId(String gameId) {
+            this.gameId = gameId;
+        }
+
+        public String getUsername() {
+            return userName;
+        }
+        public void setUsername(String userName) {
+            this.userName = userName;
+        }
+
+
+
+    }   
 }

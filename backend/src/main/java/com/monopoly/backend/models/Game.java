@@ -9,7 +9,6 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -22,11 +21,8 @@ public class Game {
 
     private int turnIndex; // whose turn it is
     private boolean started;
-    
-    @ManyToMany
-    List<User> players;
 
-    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<PlayerState> playerStates = new ArrayList<>();
 
 
@@ -35,16 +31,16 @@ public class Game {
     @ElementCollection(fetch= FetchType.EAGER)
     private List<String> playerUsernames = new ArrayList<>();
 
+    // map to list of tile states
+    @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<TileState> tileStates = new ArrayList<>();
 
 
     // default constructor dont delete
     public Game() {
         this.gameId = UUID.randomUUID().toString();
+        
     }
-
-    
-
-
 
     public void addPlayer(String username) {
         playerUsernames.add(username);
@@ -72,14 +68,6 @@ public class Game {
         this.started = started;
     }
 
-    public List<User> getPlayers() {
-        return players;
-    }
-
-    public void setPlayers(List<User> players) {
-        this.players = players;
-    }
-
     public List<PlayerState> getPlayerStates() {
         return playerStates;
     }
@@ -102,5 +90,17 @@ public class Game {
 
     public void setPlayerUsernames(List<String> playerUsernames) {
         this.playerUsernames = playerUsernames;
+    }
+    public List<TileState> getTileStates() {
+        return tileStates;
+    }
+
+    public void setTileStates(List<TileState> tileStates) {
+        this.tileStates = tileStates;
+    }
+
+
+    private void createGameTiles() {
+
     }
 }

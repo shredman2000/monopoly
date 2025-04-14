@@ -5,8 +5,8 @@ import * as THREE from 'three';
  */
 export class GamePiece {
 
-    constructor(color = 'red') {
-        this.mesh = new THREE.Mesh(new THREE.SphereGeometry(.3, 32,32), new THREE.MeshBasicMaterial({ color }));
+    constructor(color) {
+        this.mesh = new THREE.Mesh(new THREE.SphereGeometry(.1, 32,32), new THREE.MeshBasicMaterial({ color }));
 
         this.mesh.position.set(0,.4,0);
     }

@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.monopoly.backend.models.Game;
 import com.monopoly.backend.repository.GameRepository;
-import com.monopoly.backend.repository.UserRepository;
 import com.monopoly.backend.services.GameCreatedMessage;
+import com.monopoly.backend.services.GameService;
 import com.monopoly.backend.services.GameSettings;
 import com.monopoly.backend.services.GameStateResponse;
 import com.monopoly.backend.services.JoinGameRequest;
@@ -27,12 +27,13 @@ import com.monopoly.backend.services.JoinGameRequest;
 public class GameController {
 
     private GameRepository gameRepository;
-    private UserRepository userRepository;
+    private GameService gameService;
 
     // dependency injector
-    public GameController(GameRepository gameRepository, UserRepository userRepository) {
+    public GameController(GameRepository gameRepository, GameService gameService) {
         this.gameRepository = gameRepository;
-        this.userRepository = userRepository;
+        this.gameService = gameService;
+
     }
     
 
@@ -42,15 +43,16 @@ public class GameController {
         String hostUsername = gameSettings.getPlayerUsernames().get(0);
 
         // check for the right number of players being passed, failsafe
+        Game game = gameService.createNewGame(hostUsername);
 
-        Game game = new Game();
-        game.addPlayer(hostUsername);
         gameRepository.save(game);
 
         String createdGameId = game.getGameId();
         
         return ResponseEntity.ok(new GameCreatedMessage(createdGameId, "Game Created Successfully"));
     }
+
+
 
     //@CrossOrigin(origins = "http://localhost:3000/")
     @PostMapping("/joinGame")
