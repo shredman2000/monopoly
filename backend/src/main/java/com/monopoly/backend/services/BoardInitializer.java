@@ -45,7 +45,7 @@ public class BoardInitializer {
         tiles.add(new TileState("Tennessee Avenue","property",18, 180, game, 100, 14, 70, 200, 550, 750, 950, 90));
         tiles.add(new TileState("New York Avenue","property",19, 200, game, 100, 16, 80, 220, 600, 800, 1000, 100));
 
-        tiles.add(new TileState("Free Parking", "free_parking",20, game));
+        tiles.add(new TileState("Free Parking", "free_parking",20, game, 200));
 
         //REDS
         tiles.add(new TileState("Kentucky Avenue", "property",21,220, game, 150, 18, 90, 250, 700, 875, 1050, 110));

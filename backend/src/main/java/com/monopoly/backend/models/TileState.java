@@ -50,6 +50,8 @@ public class TileState {
     private int cost3Owned;
     private int cost4Owned;
 
+    private int freeParkingTotal;
+
     @ManyToOne
     @JoinColumn(name = "game_id")
     @JsonBackReference
@@ -63,6 +65,15 @@ public class TileState {
         this.type = type;
         this.game = game;
         this.tileIndex = tileIndex;
+    }
+
+    // free parking constructor
+    public TileState(String tileName, String type, int tileIndex, Game game, int freeParkingTotal) {
+        this.tileName = tileName;
+        this.type = type;
+        this.game = game;
+        this.tileIndex = tileIndex;
+        this.freeParkingTotal = freeParkingTotal;
     }
 
     // constructor for ownable tiles
@@ -236,6 +247,13 @@ public class TileState {
     }
     public void setType(String type) {
         this.type = type;
+    }
+    
+    public int getFreeParkingTotal() {
+        return freeParkingTotal;
+    }
+    public void setFreeParkingTotal(int freeParkingTotal) {
+        this.freeParkingTotal = freeParkingTotal;
     }
 
     

@@ -38,7 +38,7 @@ public class Game {
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonManagedReference
     private List<TileState> tileStates = new ArrayList<>();
-
+    
 
     // default constructor dont delete
     public Game() {

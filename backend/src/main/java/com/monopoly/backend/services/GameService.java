@@ -1,14 +1,13 @@
 package com.monopoly.backend.services;
 
 import java.util.*;
-
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.monopoly.backend.models.Game;
-import com.monopoly.backend.models.TileState;
 import com.monopoly.backend.models.PlayerState;
+import com.monopoly.backend.models.TileState;
 import com.monopoly.backend.repository.GameRepository;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 
 @Service
@@ -69,6 +68,7 @@ public class GameService {
         Map<String, Object> response = new HashMap<>();
         switch(tileType) {
             case "go":
+
                 finalizeTurn(game, username);
                 break;
             case "property":
@@ -119,12 +119,40 @@ public class GameService {
                         response.put("owner", owner);
                         response.put("rent", rentToPay);
                         response.put("player", username);
+
                     }
                 }
                 break;
             case "tax":
                 // calculate owed and pay, add to free parking total
-                finalizeTurn(game, username);
+                if (landedTile.getTileName().equals("Income Tax")) {// = lowest of 10% of players balance or 200 dollars
+                    int incomeTax = 200;
+                    if ((ps.getMoney() * .1) > 200 ) { incomeTax = 200; }
+                    else { incomeTax = (int)(ps.getMoney() * .1); }  
+                    ps.setMoney(ps.getMoney() - incomeTax);
+                    TileState freeParking = game.getTileStates().stream().filter(tile -> tile.getTileName().equals("Free Parking")).findFirst().orElse(null);
+                    if (freeParking == null) { return; }
+                    freeParking.setFreeParkingTotal(freeParking.getFreeParkingTotal() + incomeTax);
+                    response.put("action", "pay_tax");
+                    response.put("amount", incomeTax);
+                    response.put("player", username);
+                    response.put("taxType", "income");
+                    response.put("freeparkingtotal", freeParking.getFreeParkingTotal());
+                    break;
+                }
+                else if(landedTile.getTileName().equals("Luxury Tax")) { // pay 75
+                    int luxuryTax = 75;
+                    ps.setMoney(ps.getMoney() - luxuryTax);
+                    TileState freeParking = game.getTileStates().stream().filter(tile -> tile.getTileName().equals("Free Parking")).findFirst().orElse(null);
+                    if (freeParking == null) { return; }
+                    freeParking.setFreeParkingTotal(freeParking.getFreeParkingTotal() + luxuryTax);
+                    response.put("action", "pay_tax");
+                    response.put("amount", luxuryTax);
+                    response.put("player", username);
+                    response.put("taxType", "luxury");
+                    response.put("freeparkingtotal", freeParking.getFreeParkingTotal());
+                    break;
+                }
                 break;
             case "community_chest":
                 // draw card
@@ -134,17 +162,65 @@ public class GameService {
                 // draw card
                 finalizeTurn(game, username);
                 break;
-            case "railroad":
-                finalizeTurn(game, username);
+            case "railroad": // check how many other railroads the player owns
+                if (!landedTile.isOwned()) { // buy property
+                    System.out.println("<<<<<<<<<<<<<<<reached buy railroad");  
+                    response.put("action", "offer_purchase");
+                    response.put("type", "railroad");
+                    response.put("tileName", landedTile.getTileName());
+                    response.put("price", landedTile.getPrice());
+                    response.put("player", username);
+                    break;
+                }
+                else {
+                    System.out.println("<<<<<<<<<<<<<<<<<<<<<<reached railroad owned by other user");
+                    int numRROwned = 1;
+                    List<TileState> tiles = game.getTileStates();
+                    for (TileState tile : tiles) {
+                        if (tile.getType().equals("railroad") && tile.getOwnerUsername().equals(username)) {
+                            numRROwned++; 
+                        }
+                    } 
+                    
+                    int rent = 0;  
+                    switch(numRROwned) {
+                        case 1:
+                            rent = landedTile.getRent0House();
+                            break;
+                        case 2:
+                            rent = landedTile.getRent1House();
+                            break;
+                        case 3: 
+                            rent = landedTile.getRent2House();
+                            break;
+                        case 4:
+                            rent = landedTile.getRent3House();
+                            break;
+                    }
+                    response.put("action", "pay_rent");
+                    response.put("owner", landedTile.getOwnerUsername());
+                    response.put("rent", rent);
+                    response.put("player", ps);
+                }
                 break;
             case "utility":
                 // if someone elses property, pay up.
+                
                 finalizeTurn(game, username);
                 // if unowned, give choice to buy
                 break;
             case "free_parking":
                 // give player amount of money on free parking
-                finalizeTurn(game, username);
+                TileState freeParkingTile = game.getTileStates().stream().filter(tile -> tile.getTileName().equals("Free Parking")).findFirst().orElse(null);
+                int amountOnFreeParking = freeParkingTile.getFreeParkingTotal();
+                freeParkingTile.setFreeParkingTotal(0); 
+                ps.setMoney(ps.getMoney() + amountOnFreeParking);
+
+                response.put("action", "free_parking");
+                response.put("player", username);
+                response.put("amount", amountOnFreeParking);
+                response.put("freeparkingtotal",freeParkingTile.getFreeParkingTotal());
+                response.put("type", "free parking");
                 break;
             case "go_to_jail":
                 // update players pos to jail tile + set some ticker for 3 turns.

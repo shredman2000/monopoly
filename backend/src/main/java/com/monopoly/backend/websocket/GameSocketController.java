@@ -137,7 +137,7 @@ public class GameSocketController {
 
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
     }
-
+    
     @MessageMapping("/buyProperty")
     public void buyProperty(Map<String, String> msg) {
         System.out.println("/buyProperty reached");

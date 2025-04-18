@@ -8,6 +8,8 @@ import ShowUserInfo from './components/ShowUserInfo';
 import WebSocketService from './WebSocketService';
 import UserPaysUser from './components/UserPaysUser';
 import { useLocation } from 'react-router-dom';
+import UserPaysTax from './components/UserPaysTax'
+import UserRecievesMoney from './components/UserRecievesMoney';
 
 function Scene() {
   const mountRef = useRef(null);
@@ -22,6 +24,8 @@ function Scene() {
   const [ownedProperties, setOwnedProperties] = useState([]);
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [hasRolled, setHasRolled] = useState(false);
+  const [moveDone, setMoveDone] = useState(false);
+  const [inPostMoveState, setInPostMoveState] = useState(false);
 
   const isMyTurn = playerUsernames[turnIndex] === username;
 
@@ -92,7 +96,6 @@ function Scene() {
       const currentPlayer = game.playerStates.find(p => p.username === username);
       if (currentPlayer) {
         setUserBalance(currentPlayer.money);
-        // Assume you have a way to determine what properties they own
         const props = game.tileStates
           .filter(tile => tile.ownerUsername === username)
           .map(tile => tile.tileName);
@@ -104,8 +107,6 @@ function Scene() {
       // subscribe to game updates
       WebSocketService.subscribe(`/topic/gameUpdates/${gameId}`, renderGameState);
       
-
-
       //subscribe to rolls
       // animate the user moving here 
       WebSocketService.subscribe(`/topic/rolled/${gameId}`, ({ username: rolledUser, roll, newPosition }) => {
@@ -145,6 +146,7 @@ function Scene() {
             price: data.price,
           });
         }
+
         // if it is a property and is owned
         if (data.action === "pay_rent" && data.player === username) { /////////////////// if issue later look out for "username" here
           const rentToPay = data.rent;
@@ -159,12 +161,20 @@ function Scene() {
           });
 
           setPaymentInfo({ from: username, to: userToPay, amount: rentToPay });
-          setTimeout(() => setPaymentInfo(null), 2500);
+          setTimeout(() => setPaymentInfo(null), 3000);
 
         }
-
+        // if nothing to do
         if (data.action === "continue") {
-
+            //
+        }
+        //luxury tax or income tax. just show toast 
+        if (data.action === "pay_tax") {
+          setPaymentInfo({ user: username, type: data.taxType, amount: data.amount, newFreeParkingTotal: data.freeparkingtotal });
+          setTimeout(() => setPaymentInfo(null), 3000);
+        }
+        if (data.action === "free_parking") {
+          setPaymentInfo({ user: username, type: data.type, amount: data.amount})
         }
       });
 
@@ -264,6 +274,8 @@ function Scene() {
         ownedProperties={ownedProperties}
       />
       {paymentInfo && (<UserPaysUser from={paymentInfo.from} to={paymentInfo.to} amount={paymentInfo.amount} />)}
+      {paymentInfo?.type  && (<UserPaysTax user={paymentInfo.user} type={paymentInfo.type} amount={paymentInfo.amount} newFreeParkingTotal={paymentInfo.newFreeParkingTotal}/> )}
+      {paymentInfo?.type === "free parking" && (<UserRecievesMoney user={paymentInfo.user} type={paymentInfo.type} amount={paymentInfo.amount}/> )}
     </>
   );
 }
