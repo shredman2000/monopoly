@@ -60,11 +60,12 @@ public class TileState {
     public TileState() {}
 
     //constructor for non ownable tiles [GO, jail, income tax, free parking, luxury tax, community chest, chance]
-    public TileState(String tileName, String type, int tileIndex, Game game) {
+    public TileState(String tileName, String type, int tileIndex, int price, Game game) {
         this.tileName = tileName;
         this.type = type;
         this.game = game;
         this.tileIndex = tileIndex;
+        this.price = price;
     }
 
     // free parking constructor

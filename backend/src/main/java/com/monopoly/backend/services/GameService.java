@@ -51,7 +51,7 @@ public class GameService {
      * 
      * @params 
      */
-    public void handlePlayerMove(Game game, int newPos) {
+    public void handlePlayerMove(Game game, int newPos, int roll) {
         int turnIndex = game.getTurnIndex();
         PlayerState ps = game.getPlayerStates().get(turnIndex);
         String username = game.getPlayerUsernames().get(turnIndex);
@@ -116,6 +116,7 @@ public class GameService {
                                 break;
                         }
                         response.put("action", "pay_rent");
+                        response.put("type", "property");
                         response.put("owner", owner);
                         response.put("rent", rentToPay);
                         response.put("player", username);
@@ -136,8 +137,10 @@ public class GameService {
                     response.put("action", "pay_tax");
                     response.put("amount", incomeTax);
                     response.put("player", username);
+                    response.put("type", "tax");
                     response.put("taxType", "income");
                     response.put("freeparkingtotal", freeParking.getFreeParkingTotal());
+                    finalizeTurn(game, username);
                     break;
                 }
                 else if(landedTile.getTileName().equals("Luxury Tax")) { // pay 75
@@ -149,8 +152,10 @@ public class GameService {
                     response.put("action", "pay_tax");
                     response.put("amount", luxuryTax);
                     response.put("player", username);
+                    response.put("type", "tax");
                     response.put("taxType", "luxury");
                     response.put("freeparkingtotal", freeParking.getFreeParkingTotal());
+                    finalizeTurn(game, username);
                     break;
                 }
                 break;
@@ -177,7 +182,7 @@ public class GameService {
                     int numRROwned = 1;
                     List<TileState> tiles = game.getTileStates();
                     for (TileState tile : tiles) {
-                        if (tile.getType().equals("railroad") && tile.getOwnerUsername().equals(username)) {
+                        if (tile.getType().equals("railroad") && username.equals(tile.getOwnerUsername())) { 
                             numRROwned++; 
                         }
                     } 
@@ -203,12 +208,41 @@ public class GameService {
                     response.put("player", ps);
                 }
                 break;
-            case "utility":
-                // if someone elses property, pay up.
+            case "utility": 
                 
-                finalizeTurn(game, username);
-                // if unowned, give choice to buy
-                break;
+                if (!landedTile.isOwned()) { // if unowned, give choice to buy
+                    response.put("action", "offer_purchase");
+                    response.put("type", "utility");
+                    response.put("tileName", landedTile.getTileName());
+                    response.put("price", landedTile.getPrice());
+                    response.put("player", username);
+                    break;
+                }
+                else {// if someone elses property, pay up
+                // if owner has 1 utility: 4x the dice roll, if they own 2 utilites: 10x the dice roll
+                    String ownerUsername = landedTile.getOwnerUsername();
+                    if (!ownerUsername.equals(username)) {
+                        List<TileState> ownedUtils = game.getTileStates().stream().filter(tile -> tile.getType().equals("utility") && tile.getOwnerUsername().equals(ownerUsername)).toList();
+                        int rent = 0;
+                        if (ownedUtils.size() == 1) {
+                            rent = 4 * roll;
+                        }
+                        else if (ownedUtils.size() == 2) {
+                            rent = 10 * roll;
+                        }
+                        response.put("action", "pay_rent");
+                        response.put("type", "utility");
+                        response.put("tileName", landedTile.getTileName());
+                        response.put("player", username);
+                        response.put("owner", ownerUsername);
+                        response.put("rent", rent);
+                        break;
+                    }
+                    else {// you own
+                        finalizeTurn(game, username);
+                        break;
+                    }
+                }
             case "free_parking":
                 // give player amount of money on free parking
                 TileState freeParkingTile = game.getTileStates().stream().filter(tile -> tile.getTileName().equals("Free Parking")).findFirst().orElse(null);
@@ -221,6 +255,7 @@ public class GameService {
                 response.put("amount", amountOnFreeParking);
                 response.put("freeparkingtotal",freeParkingTile.getFreeParkingTotal());
                 response.put("type", "free parking");
+                finalizeTurn(game, username);
                 break;
             case "go_to_jail":
                 // update players pos to jail tile + set some ticker for 3 turns.

@@ -125,12 +125,13 @@ public class GameSocketController {
         String username = msg.get("username");
         String gameId = msg.get("gameId");
         int newPos = Integer.parseInt(msg.get("newPosition"));
+        int roll = Integer.parseInt(msg.get("roll"));
 
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) return;
         int turnIndex = game.getTurnIndex();
         String currentUsername = game.getPlayerUsernames().get(game.getTurnIndex());
-        gameService.handlePlayerMove(game, newPos);
+        gameService.handlePlayerMove(game, newPos, roll);
         //currPlayer.setPosition(newPos);
 
         gameRepository.save(game);

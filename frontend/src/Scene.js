@@ -127,6 +127,7 @@ function Scene() {
             gameId: gameId.toString(),
             username: rolledUser,
             newPosition: newPosition.toString(),
+            roll: roll,
           });
 
       });
@@ -152,14 +153,24 @@ function Scene() {
           const rentToPay = data.rent;
           const userToPay = data.owner;
 
+          if (data.type === "utility") {
+            WebSocketService.send("/app/payUser", {
+              gameId,
+              fromUsername: username,
+              toUsername: userToPay,
+              amount: rentToPay,
+            })
+          }
+          if (data.type === "property") {
+            WebSocketService.send("/app/payUser", {
+              gameId,
+              fromUsername: username,
+              toUsername: userToPay,
+              amount: rentToPay,
+            });
+          }
           console.log("Paying" + userToPay + " $" +rentToPay);
-          WebSocketService.send("/app/payUser", {
-            gameId,
-            fromUsername: username,
-            toUsername: userToPay,
-            amount: rentToPay,
-          });
-
+      
           setPaymentInfo({ from: username, to: userToPay, amount: rentToPay });
           setTimeout(() => setPaymentInfo(null), 3000);
 
@@ -170,7 +181,7 @@ function Scene() {
         }
         //luxury tax or income tax. just show toast 
         if (data.action === "pay_tax") {
-          setPaymentInfo({ user: username, type: data.taxType, amount: data.amount, newFreeParkingTotal: data.freeparkingtotal });
+          setPaymentInfo({ user: username, type: data.type, taxType: data.taxType, amount: data.amount, newFreeParkingTotal: data.freeparkingtotal });
           setTimeout(() => setPaymentInfo(null), 3000);
         }
         if (data.action === "free_parking") {
@@ -182,12 +193,6 @@ function Scene() {
       // 🔁 Get full game state on load
       WebSocketService.send(`/app/getGameState`, { gameId });
     });
-
-
-
-
-
-
 
 
     const clock = new THREE.Clock();
@@ -273,8 +278,10 @@ function Scene() {
         balance={userBalance}
         ownedProperties={ownedProperties}
       />
-      {paymentInfo && (<UserPaysUser from={paymentInfo.from} to={paymentInfo.to} amount={paymentInfo.amount} />)}
-      {paymentInfo?.type  && (<UserPaysTax user={paymentInfo.user} type={paymentInfo.type} amount={paymentInfo.amount} newFreeParkingTotal={paymentInfo.newFreeParkingTotal}/> )}
+      {paymentInfo?.from && paymentInfo?.to && (
+        <UserPaysUser from={paymentInfo.from} to={paymentInfo.to} amount={paymentInfo.amount} />
+      )}
+      {paymentInfo?.type  === "tax" && (<UserPaysTax user={paymentInfo.user} type={paymentInfo.taxType} amount={paymentInfo.amount} newFreeParkingTotal={paymentInfo.newFreeParkingTotal}/> )}
       {paymentInfo?.type === "free parking" && (<UserRecievesMoney user={paymentInfo.user} type={paymentInfo.type} amount={paymentInfo.amount}/> )}
     </>
   );
