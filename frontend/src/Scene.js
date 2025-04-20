@@ -10,6 +10,8 @@ import UserPaysUser from './components/UserPaysUser';
 import { useLocation } from 'react-router-dom';
 import UserPaysTax from './components/UserPaysTax'
 import UserRecievesMoney from './components/UserRecievesMoney';
+import PassedGo from './components/PassedGo';
+import AuctionPrompt from './components/AuctionPrompt';
 
 function Scene() {
   const mountRef = useRef(null);
@@ -26,6 +28,9 @@ function Scene() {
   const [hasRolled, setHasRolled] = useState(false);
   const [moveDone, setMoveDone] = useState(false);
   const [inPostMoveState, setInPostMoveState] = useState(false);
+  const [passedGo, setPassedGo] = useState(false);
+  const [userObj, setUser] = useState("");
+  const [auctionData, setAuctionData] = useState(null);
 
   const isMyTurn = playerUsernames[turnIndex] === username;
 
@@ -130,6 +135,7 @@ function Scene() {
             roll: roll,
           });
 
+
       });
 
 
@@ -137,6 +143,11 @@ function Scene() {
       WebSocketService.subscribe(`/topic/tileAction/${gameId}`, (data) => {
         console.log("[tileAction] received:", data, "| this user:", username);
         
+        //show toast for passing go and collecting 200 dollars
+        if (data.passed_go === username) {
+          setPassedGo(true);
+          setUser(data.user);
+        }
 
         // if it is a property and is unowned
         if (data.action === "offer_purchase" && data.player === username) {
@@ -189,6 +200,15 @@ function Scene() {
         }
       });
 
+      WebSocketService.subscribe(`/topic/auctionUpdates/${gameId}`, (data) => {
+        setAuctionData(data);
+        if (data.action === "auction_won") {
+          setAuctionData(null);
+        }
+        if (data.action === "lowbalance") { // make them bet again
+          
+        }
+      });
 
       // 🔁 Get full game state on load
       WebSocketService.send(`/app/getGameState`, { gameId });
@@ -266,8 +286,9 @@ function Scene() {
           }}
           onPass={() => {
             setCurrentTileOptions(null);
-            WebSocketService.send("/app/finalizeTurn", {
+            WebSocketService.send("/app/auction", {
               gameId,
+              tileName: currentTileOptions.name,
               username
             });
           }}
@@ -278,11 +299,36 @@ function Scene() {
         balance={userBalance}
         ownedProperties={ownedProperties}
       />
+      {auctionData && (
+        <AuctionPrompt
+          tileName={auctionData.tilename}
+          currentBid={auctionData.currentbid}
+          currentBidder={auctionData.currentbidder}
+          isMyTurn={auctionData.currentbidder === username}
+          
+          onBid={(amount) => {
+            WebSocketService.send("/app/auction/bid", {
+              gameId,
+              bidder: username,
+              amount,
+            });
+          }}
+          onPass={() => {
+            WebSocketService.send("/app/auction/pass", {
+              gameId,
+              bidder: username,
+            });
+          }}
+          userBalance = {userBalance}
+        />
+      )}
+
       {paymentInfo?.from && paymentInfo?.to && (
         <UserPaysUser from={paymentInfo.from} to={paymentInfo.to} amount={paymentInfo.amount} />
       )}
       {paymentInfo?.type  === "tax" && (<UserPaysTax user={paymentInfo.user} type={paymentInfo.taxType} amount={paymentInfo.amount} newFreeParkingTotal={paymentInfo.newFreeParkingTotal}/> )}
       {paymentInfo?.type === "free parking" && (<UserRecievesMoney user={paymentInfo.user} type={paymentInfo.type} amount={paymentInfo.amount}/> )}
+      {passedGo && (<PassedGo user={userObj}/>)}
     </>
   );
 }

@@ -1,6 +1,9 @@
 package com.monopoly.backend.services;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +58,8 @@ public class GameService {
         int turnIndex = game.getTurnIndex();
         PlayerState ps = game.getPlayerStates().get(turnIndex);
         String username = game.getPlayerUsernames().get(turnIndex);
+        int prevPos = newPos - roll;
+
 
         //retrieve tile landed on
         TileState landedTile = game.getTileStates().stream()
@@ -62,13 +67,24 @@ public class GameService {
             .findFirst()
             .orElse(null);
 
+
         
         String tileType = landedTile.getType();
         System.out.println("in handle player move, tileType = " + tileType);
         Map<String, Object> response = new HashMap<>();
+
+
+        // check if passed go
+        if (prevPos <= 0) {
+            ps.setMoney(ps.getMoney() + 200);
+            response.put("passed_go", username);
+            gameRepository.save(game);
+            messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
+        }
+
         switch(tileType) {
             case "go":
-
+                
                 finalizeTurn(game, username);
                 break;
             case "property":
@@ -271,4 +287,6 @@ public class GameService {
         messagingTemplate.convertAndSend("/topic/tileAction/" + game.getGameId(), response);
     }
 
+
+    
 }

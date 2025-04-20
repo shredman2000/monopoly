@@ -1,0 +1,36 @@
+.auction-container {
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #ffffffdd;
+    border: 2px solid #007bff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    z-index: 999;
+    text-align: center;
+    width: 300px;
+    font-family: sans-serif;
+  }
+  
+  .bid-buttons button {
+    margin: 0.25rem;
+    padding: 0.5rem 1rem;
+    font-weight: bold;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .bid-buttons button:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+  
+  .pass-button {
+    margin-top: 1rem;
+    background-color: #dc3545;
+  }
+  

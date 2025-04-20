@@ -1,0 +1,42 @@
+.passed-go-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background-color: #28a745;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: slideUpFade 0.5s ease-out, fadeOut 3s ease-in 2s forwards;
+    z-index: 1000;
+  }
+  
+  .passed-go-player {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+  
+  .passed-go-reward {
+    margin: 0.2rem 0 0 0;
+    font-weight: 500;
+  }
+  
+  @keyframes slideUpFade {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeOut {
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  }
+  

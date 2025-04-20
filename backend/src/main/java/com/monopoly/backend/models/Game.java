@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -28,6 +29,8 @@ public class Game {
     @JsonManagedReference
     private List<PlayerState> playerStates = new ArrayList<>();
 
+    @OneToOne(mappedBy="game", cascade=CascadeType.ALL, orphanRemoval=true, fetch=FetchType.EAGER)
+    private AuctionState auctionState;
 
     int numPlayers;
 
@@ -102,9 +105,13 @@ public class Game {
     public void setTileStates(List<TileState> tileStates) {
         this.tileStates = tileStates;
     }
+    
 
+    public AuctionState getAuctionState() {
+        return auctionState;
+    }
 
-    private void createGameTiles() {
-
+    public void setAuctionState(AuctionState auctionState) {
+        this.auctionState = auctionState;
     }
 }

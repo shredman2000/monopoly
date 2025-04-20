@@ -1,18 +1,23 @@
 package com.monopoly.backend.websocket;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import com.monopoly.backend.models.AuctionState;
 import com.monopoly.backend.models.Game;
 import com.monopoly.backend.models.PlayerState;
 import com.monopoly.backend.models.TileState;
+import com.monopoly.backend.repository.AuctionStateRepository;
 import com.monopoly.backend.repository.GameRepository;
 import com.monopoly.backend.services.GameService;
 
@@ -27,6 +32,9 @@ public class GameSocketController {
 
     @Autowired
     private GameService gameService;
+
+    @Autowired
+    private AuctionStateRepository auctionStateRepository;
 
     /**
      * websocket for joining a lobby
@@ -90,7 +98,9 @@ public class GameSocketController {
     }
 
 
-
+    /**
+     * endpoint for rolling the dice.
+     */
     @MessageMapping("/rollDice")
     public void rollDice(RollDiceRequest rollRequest) {
         System.out.println("/rollDice reached");
@@ -118,7 +128,9 @@ public class GameSocketController {
         messagingTemplate.convertAndSend("/topic/rolled/" + gameId, Map.of( "username", currPlayer.getUsername(),"roll", roll,"newPosition", nextPos));
     }
 
-
+    /**
+     * endpoint for starting the loop when a player lands on a tile
+     */
     @MessageMapping("/handlePlayerLanding")
     public void handlePlayerLanding(Map<String, String> msg) {
         System.out.println("/handlePlayerLanding reached");
@@ -182,6 +194,124 @@ public class GameSocketController {
 
     }
 
+    /**
+     * end point for starting an auction
+     */
+    @MessageMapping("/auction")
+    public void auctionProperty(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) return;
+        List<PlayerState> players = game.getPlayerStates().stream().filter(player -> !player.getUsername().equals(msg.get("username"))).toList();
+        Optional<TileState> tileToSell = game.getTileStates().stream().filter(tile -> tile.getTileName().equals(msg.get("tileName"))).findFirst();
+        if (tileToSell.isEmpty()) { System.out.println("Error"); }
+        TileState tile = tileToSell.get();
+
+        List<String> playerUsernames = players.stream().map(PlayerState::getUsername).collect(Collectors.toList());
+   
+        AuctionState auctionState = new AuctionState(tile.getTileName(), playerUsernames,  msg.get("username"));
+        auctionState.setGame(game);
+        game.setAuctionState(auctionState);
+        gameRepository.save(game);
+        
+        Map<String, Object> auctionUpdate = new HashMap<>();
+        auctionUpdate.put("tilename", tile.getTileName());
+        auctionUpdate.put("currentbid", auctionState.getCurrentBid());
+        auctionUpdate.put("currentbidder", auctionState.getCurrentBidder());
+
+
+        messagingTemplate.convertAndSend("/topic/auctionUpdates/" + gameId, auctionUpdate);
+    }
+
+    @MessageMapping("/auction/bid")
+    public void bidAuction(Map<String, String> msg) {
+        Map<String, Object> auctionUpdate = new HashMap<>();
+        String gameId = msg.get("gameId");
+        String bidderUsername = msg.get("bidder");
+        int bid = Integer.parseInt(msg.get("amount"));
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) return;
+        PlayerState player = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(bidderUsername)).findFirst().get();
+        AuctionState auctionState = game.getAuctionState();
+        int currBid = auctionState.getCurrentBid() + bid;
+
+        if (currBid >= player.getMoney()) {
+            auctionUpdate.put("action", "lowbalance");
+            auctionUpdate.put("tilename", auctionState.getTileName());
+            messagingTemplate.convertAndSend("/topic/auctionUpdates/" + gameId, auctionUpdate);
+            return;
+        }
+
+        auctionState.makeBid(bidderUsername, currBid);
+        auctionState.advanceTurn();
+
+        
+        gameRepository.save(game);
+
+        auctionUpdate.put("tilename",auctionState.getTileName());
+        auctionUpdate.put("currentbid", auctionState.getCurrentBid());
+        auctionUpdate.put("currentbidder", auctionState.getCurrentBidder());
+        messagingTemplate.convertAndSend("/topic/auctionUpdates/" + gameId, auctionUpdate);
+    }
+
+    /**
+     *  Endpoint for leaving the auction
+     * */ 
+    @MessageMapping("/auction/pass")
+    public void passAuction(Map<String, String> msg) {
+        String bidder = msg.get("bidder");
+        String gameId = msg.get("gameId");
+        Optional<Game> gameOpt = gameRepository.findById(gameId);
+        if (gameOpt.isEmpty()) { return; }
+        Game game = gameOpt.get();
+
+        AuctionState auction = game.getAuctionState();
+
+        auction.removeBidder(bidder);
+        Map<String, Object> auctionUpdate = new HashMap<>();
+        // person won the tile
+        if (auction.getActiveBidders().size() <= 1) {
+            String winner = auction.getActiveBidders().get(0);
+            TileState tileSold = game.getTileStates().stream().filter(tile -> tile.getTileName().equals(auction.getTileName())).findFirst().get();
+            
+            tileSold.setOwned(true);
+            tileSold.setOwnerUsername(winner);
+            game.setAuctionState(null);
+            
+            PlayerState winnerPS = game.getPlayerStates().stream().filter(ps -> ps.getUsername().equals(winner)).findFirst().get();
+            int winningBid = auction.getCurrentBid();
+            winnerPS.setMoney(winnerPS.getMoney() - winningBid);
+
+            gameRepository.save(game);
+            
+
+
+            gameService.finalizeTurn(game, auction.getAuctionStarter());
+            Map<String, Object> endMessage = new HashMap<>();
+            endMessage.put("action", "auction_won");
+            endMessage.put("tileName", tileSold.getTileName());
+            endMessage.put("winner", winner);
+            endMessage.put("price", auction.getCurrentBid());
+
+            messagingTemplate.convertAndSend("/topic/auctionUpdates/" + gameId, endMessage);
+            return;
+        }
+
+        auction.advanceTurn();
+
+        
+        auctionUpdate.put("tilename",auction.getTileName());
+        auctionUpdate.put("currentbid", auction.getCurrentBid());
+        auctionUpdate.put("currentbidder", auction.getCurrentBidder());
+
+        messagingTemplate.convertAndSend("/topic/auctionUpdates/" + gameId, auctionUpdate);
+    }
+
+    /**
+     * endpoint for paying a user
+     * 
+     */
     @MessageMapping("/payUser")
     public void payUser(Map<String, String> msg) {
         System.out.println("<<<<<<<<<<<REACHED PAYUSER");
@@ -275,4 +405,5 @@ public class GameSocketController {
 
 
     }   
+
 }
