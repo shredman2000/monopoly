@@ -2,11 +2,14 @@
 import React from 'react';
 import './BuyPropertyPrompt.css';
 
-export default function BuyPropertyPrompt({ tileName, price, onBuy, onPass }) {
+export default function BuyPropertyPrompt({ tileName, price, userBalance, onBuy, onPass }) {
     return (
       <div className="tile-popup">
         <p>Buy {tileName} for ${price}?</p>
-        <button onClick={onBuy}>Buy</button>
+        <button
+          disabled={userBalance < price} 
+          onClick={onBuy}>Buy
+        </button>
         <button onClick={onPass}>Pass</button>
       </div>
     );

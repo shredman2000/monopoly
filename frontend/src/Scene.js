@@ -205,12 +205,9 @@ function Scene() {
         if (data.action === "auction_won") {
           setAuctionData(null);
         }
-        if (data.action === "lowbalance") { // make them bet again
-          
-        }
       });
 
-      // 🔁 Get full game state on load
+      // Get full game state on load
       WebSocketService.send(`/app/getGameState`, { gameId });
     });
 
@@ -276,6 +273,7 @@ function Scene() {
         <BuyPropertyPrompt
           tileName={currentTileOptions.name}
           price={currentTileOptions.price}
+          userBalance={userBalance}
           onBuy={() => {
             WebSocketService.send("/app/buyProperty", {
               gameId,
