@@ -202,7 +202,12 @@ public class GameSocketController {
         String gameId = msg.get("gameId");
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) return;
-        List<PlayerState> players = game.getPlayerStates().stream().filter(player -> !player.getUsername().equals(msg.get("username"))).toList();
+
+        //this line is for if we dont want the original person in the auction 
+        //List<PlayerState> players = game.getPlayerStates().stream().filter(player -> !player.getUsername().equals(msg.get("username"))).toList();
+        // or use this to have everyone part of auction
+        List<PlayerState> players = game.getPlayerStates();
+
         Optional<TileState> tileToSell = game.getTileStates().stream().filter(tile -> tile.getTileName().equals(msg.get("tileName"))).findFirst();
         if (tileToSell.isEmpty()) { System.out.println("Error"); }
         TileState tile = tileToSell.get();
