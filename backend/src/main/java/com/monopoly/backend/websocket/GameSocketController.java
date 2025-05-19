@@ -61,7 +61,7 @@ public class GameSocketController {
 
     /**
      * websocket for returning the list of lobby players
-     * @return players in lobby
+     * @return players in lobby, and admin
      */
     @MessageMapping("/getLobbyPlayers")
     public void getLobbyPlayers(Map<String, String> msg) {
@@ -323,6 +323,7 @@ public class GameSocketController {
         String gameId = msg.get("gameId");
         String fromUser = msg.get("fromUsername");
         String toUser = msg.get("toUsername");
+
         int rent = Integer.parseInt(msg.get("amount"));
 
         Game game = gameRepository.findById(gameId).orElse(null);
@@ -332,10 +333,7 @@ public class GameSocketController {
             .filter(p -> p.getUsername().equals(fromUser))
             .findFirst().orElse(null);
 
-        PlayerState userToBePaid = game.getPlayerStates().stream()
-            .filter(p -> p.getUsername().equals(toUser))
-            .findFirst().orElse(null);
-
+        PlayerState userToBePaid = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(toUser)).findFirst().orElse(null);
         if (payingUser == null || userToBePaid == null) { return; }
 
         payingUser.setMoney(payingUser.getMoney() - rent);
@@ -410,5 +408,20 @@ public class GameSocketController {
 
 
     }   
+    public static class LobbyState {
+        public List<String> players;
+        public String admin;
+
+        public LobbyState(List<String> players, String admin) {
+            this.players = players;
+            this.admin = admin;
+        }
+        public List<String> getPlayers() {
+            return players;
+        }
+        public String getAdmin() {
+            return admin;
+        }
+    }
 
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.catalina.connector.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -97,7 +98,17 @@ public class GameController {
     }
 
     
-
+    @PostMapping("/getAdmin")
+    public ResponseEntity<String> getAdmin(@RequestBody Map<String, String> request) {
+        String gameId = request.get("gameId");
+        Optional<Game> gameOpt = gameRepository.findById(gameId);
+        if (gameOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("gameId does not exist");
+        }
+        Game game = gameOpt.get();
+        System.out.println("<<<<<<<<<<<<<<<<<<<<< ADMINADMINADMIN: " + game.getAdmin());
+        return ResponseEntity.ok(game.getAdmin());
+    } 
 
     /**
      * @return

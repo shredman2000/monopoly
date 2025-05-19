@@ -31,6 +31,7 @@ function Scene() {
   const [passedGo, setPassedGo] = useState(false);
   const [userObj, setUser] = useState("");
   const [auctionData, setAuctionData] = useState(null);
+  const [admin, setAdmin] = useState(null);
 
   const isMyTurn = playerUsernames[turnIndex] === username;
 

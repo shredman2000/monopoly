@@ -28,6 +28,7 @@ public class GameService {
 
     public Game createNewGame(String username) {
         Game game = new Game();
+        game.setAdmin(username);
         game.addPlayer(username);
 
         List<TileState> tiles = boardInitializer.createTiles(game);

@@ -25,6 +25,8 @@ public class Game {
     private int turnIndex; // whose turn it is
     private boolean started;
 
+    public String adminUsername;
+
     @OneToMany(mappedBy = "game", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<PlayerState> playerStates = new ArrayList<>();
@@ -113,5 +115,13 @@ public class Game {
 
     public void setAuctionState(AuctionState auctionState) {
         this.auctionState = auctionState;
+    }
+
+    public void setAdmin(String username) {
+        this.adminUsername = username;
+    }
+
+    public String getAdmin() {
+        return adminUsername;
     }
 }

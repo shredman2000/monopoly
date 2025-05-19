@@ -10,10 +10,26 @@ function WaitingRoom() {
   const navigate = useNavigate();
   const { gameId, username } = location.state || {};
   const [players, setPlayers] = useState([]);
+  const [admin, setAdmin] = useState(null);
 
   useEffect(() => {
-    console.log("👀 Players state updated:", players);
+    //console.log("Players state updated:", players);
     WebSocketService.connect(() => {
+      fetch('http://localhost:8080/games/getAdmin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ gameId })  // Send the gameId in the request body
+      })
+        .then(response => response.text())
+        .then(adminName => { 
+          setAdmin(adminName);
+          console.log("fetched admin:", adminName);
+        })
+        .catch(err => console.log("error fetching admin", err));
+
+
       WebSocketService.subscribe(`/topic/lobby/${gameId}`, (updatedPlayers) => {
         console.log("💡 Players from server:", updatedPlayers);
         setPlayers(updatedPlayers); // assuming backend sends player list
@@ -21,7 +37,6 @@ function WaitingRoom() {
       setTimeout(() => {
         WebSocketService.send(`/app/getLobbyPlayers`, { gameId });
       }, 100);
-
       WebSocketService.subscribe(`/topic/start/${gameId}`, () => {
         navigate('/scene', { state: { gameId, username } });
       });
@@ -93,11 +108,11 @@ function WaitingRoom() {
         <p>Game ID: <strong>{gameId}</strong></p>
         <h4>Joined Players:</h4>
         <ul>
-          {players.map((p, i) => (
-            <li key={i}>{p}</li>
-          ))}
+          {(players).map((username, i) => ( <li key={i}> {username} {username === admin && <strong>(ADMIN)</strong>}</li> ))}
         </ul>
-        <button onClick={handleStartGame}>Start Game</button>
+        {username === admin && (
+          <button onClick={handleStartGame}>Start Game</button> // only show start button to admin
+        )}
       </div>
     </>
   );

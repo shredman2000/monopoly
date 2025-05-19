@@ -119,7 +119,7 @@ function MainMenu() {
           zIndex: 10,
         }}
       >
-        {/* Join Game Panel */}
+        {}
         <div
           style={{
             background: 'rgba(255, 255, 255, 0.95)',
@@ -149,7 +149,7 @@ function MainMenu() {
           </button>
         </div>
 
-        {/* Create Game Panel */}
+        {}
         <div
           style={{
             background: 'rgba(255, 255, 255, 0.95)',
