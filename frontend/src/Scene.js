@@ -8,6 +8,7 @@ import UserPaysTax from './components/UserPaysTax';
 import UserRecievesMoney from './components/UserRecievesMoney';
 import PassedGo from './components/PassedGo';
 import WebSocketService from './WebSocketService';
+import PostMovePanel from './components/PostMovePanel';
 
 
 import useBoardScene from './hooks/useBoardScene';
@@ -16,6 +17,7 @@ import useGameSocket from './hooks/useGameSocket';
 function Scene() {
   const mountRef = useRef(null);
   const { gameId, username } = useLocation().state || {};
+
 
   const {
     turnIndex,
@@ -42,6 +44,10 @@ function Scene() {
     playerMapRef,
     canRoll,
     setCanRoll,
+    inPostMoveState,
+    setInPostMoveState,
+    gameState,
+    setGameState,
   } = usePlayerState(username);
 
   // create board camera and scene stuff
@@ -61,12 +67,13 @@ function Scene() {
     setPassedGo,
     setUser,
     setAuctionData,
+    setInPostMoveState,
     setCanRoll,
     playerMapRef,
     sceneRef,
     cameraRef,
     boardRef,
-
+    setGameState,
   });
 
   const handleRollDice = () => {
@@ -80,7 +87,7 @@ function Scene() {
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
 
-      {canRoll && !currentTileOptions &&(
+      {canRoll && !currentTileOptions && !inPostMoveState &&(
         <button
           onClick={handleRollDice}
           style={{
@@ -136,6 +143,19 @@ function Scene() {
       {paymentInfo?.type === 'tax' && <UserPaysTax {...paymentInfo} />}
       {paymentInfo?.type === 'free parking' && <UserRecievesMoney {...paymentInfo} />}
       {passedGo && <PassedGo user={userObj} />}
+
+      {inPostMoveState && (
+        <PostMovePanel
+          gameState={gameState}
+          username={username}
+          isMyTurn={isMyTurn}
+          onEndTurn={() => {
+            WebSocketService.send('/app/finalizeTurn', { gameId, username });
+            setInPostMoveState(false); // reset
+          }}
+        />
+      )}
+      
     </>
   );
 }

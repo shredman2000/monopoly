@@ -21,7 +21,9 @@ export default function useGameSocket({
   sceneRef,
   cameraRef,
   boardRef,
-  setCanRoll
+  setCanRoll,
+  setGameState,
+  setInPostMoveState,
 }) {
   useEffect(() => {
     if (!gameId || !username) return;
@@ -29,6 +31,8 @@ export default function useGameSocket({
     WebSocketService.connect(() => {
       WebSocketService.subscribe(`/topic/gameUpdates/${gameId}`, (game) => {
         if (!game || !game.playerStates) return;
+
+        setGameState(game); // store full game image
 
         setTurnIndex(game.turnIndex);
         setPlayerUsernames(game.playerUsernames);
@@ -60,7 +64,12 @@ export default function useGameSocket({
         const currentPlayer = game.playerStates.find(p => p.username === username);
         if (currentPlayer) {
           setUserBalance(currentPlayer.money);
-          setCanRoll(currentPlayer.canRoll)
+          setCanRoll(currentPlayer.canRoll);
+          const turnUsername = game.playerUsernames[game.turnIndex];
+          const turnPlayer = game.playerStates.find(p => p.username === turnUsername);
+          const postMoveActive = turnPlayer?.inPostMove ?? false;
+
+          setInPostMoveState(postMoveActive);
           const props = game.tileStates
             .filter(tile => tile.ownerUsername === username)
             .map(tile => tile.tileName);

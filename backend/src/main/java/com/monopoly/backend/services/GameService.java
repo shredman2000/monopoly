@@ -68,7 +68,11 @@ public class GameService {
         game.getPlayerStates().stream()
             .filter(player -> player.getUsername().equals(username))
             .findFirst()
-            .ifPresent(p -> p.setCanRoll(false));
+            .ifPresent(p -> {
+                p.setCanRoll(false);
+                p.setInPostMove(false);
+            });
+
 
         // Set canRoll for the next player (based on usernames list)
         String nextUsername = game.getPlayerUsernames().get(nextTurnIndex);
@@ -89,9 +93,14 @@ public class GameService {
      * 
      */
     public void postMoveState(Game game, String username) {
-
+        game.getPlayerStates().stream()
+            .filter(p -> p.getUsername().equals(username))
+            .findFirst()
+            .ifPresent(p -> p.setInPostMove(true));
         
-        finalizeTurn(game, username);
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
+        //finalizeTurn(game, username);
     }
 
     /**
@@ -270,7 +279,7 @@ public class GameService {
                     response.put("action", "pay_rent");
                     response.put("owner", landedTile.getOwnerUsername());
                     response.put("rent", rent);
-                    response.put("player", ps);
+                    response.put("player", username);
                 }
                 break;
             case "utility": 

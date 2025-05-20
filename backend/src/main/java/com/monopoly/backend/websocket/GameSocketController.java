@@ -369,8 +369,8 @@ public class GameSocketController {
         String username = msg.get("username");
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) return;
-        gameService.postMoveState(game, username);
-        //gameService.finalizeTurn(game, username);
+        //gameService.postMoveState(game, username);
+        gameService.finalizeTurn(game, username);
     }
 
     public static class PlayerMoveMessage {

@@ -18,6 +18,7 @@ public class PlayerState {
     private Long id;
 
     private Boolean canRoll = false;
+    private Boolean inPostMove = false;
 
     private String username;
     private int position = 0;
@@ -55,6 +56,14 @@ public class PlayerState {
 
     public String getUsername() {
         return username;
+    }
+
+    public Boolean getInPostMove() {
+        return inPostMove;
+    }
+
+    public void setInPostMove(Boolean inPostMove) {
+        this.inPostMove = inPostMove;
     }
 
     public void setUsername(String username) {

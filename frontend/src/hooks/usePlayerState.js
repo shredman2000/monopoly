@@ -15,6 +15,9 @@ export default function usePlayerState(username) {
     const [userObj, setUser] = useState("");
     const [auctionData, setAuctionData] = useState(null);
     const [canRoll, setCanRoll] = useState(false)
+    const [inPostMoveState, setInPostMoveState] = useState(false);
+
+    const [gameState, setGameState] = useState(null);
 
     const isMyTurn = playerUsernames[turnIndex] === username;
 
@@ -43,5 +46,9 @@ export default function usePlayerState(username) {
       playerMapRef,
       canRoll,
       setCanRoll,
+      inPostMoveState,
+      setInPostMoveState,
+      gameState, 
+      setGameState,
     };
 }
