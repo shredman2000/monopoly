@@ -88,11 +88,23 @@ public class GameSocketController {
         game.setTurnIndex(0);
 
         String firstPlayer = players.get(0);
-        
+        List<String> colors = List.of("red" , "blue" ," pink", "green", "yellow", "purple", "orange");
         for (PlayerState playerState : game.getPlayerStates()) { //set each players position to the first tile.
-            playerState.setPosition(0); 
+            playerState.setPosition(0);
             if (firstPlayer.equals(playerState.getUsername())) { playerState.setCanRoll(true); }
         }
+
+        for (int i = 0; i < players.size(); i++ ) {
+            String playerUsername = players.get(i);
+            PlayerState ps = game.getPlayerStates().stream()
+                .filter(player -> player.getUsername().equals(playerUsername)).findFirst().orElse(null);
+            if (ps != null) {
+                ps.setColor(colors.get(i % colors.size()));
+            }
+        }
+
+        
+
 
         gameRepository.save(game);
 

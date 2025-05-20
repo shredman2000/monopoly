@@ -70,7 +70,7 @@ export class BoardObject {
   
     let tileIndex = 0;
   
-    // ✅ Bottom row (GO → Jail corner)
+    //Bottom row (GO → Jail corner)
     for (let i = 0; i < 11; i++) {
       this.addTile(tileData[tileIndex++], {
         x: startX + (10 - i),
@@ -79,7 +79,7 @@ export class BoardObject {
       }, 0);
     }
   
-    // ✅ Left column (bottom to top)
+    // Left column (bottom to top)
     for (let i = 1; i < 10; i++) {
       this.addTile(tileData[tileIndex++], {
         x: startX,
@@ -88,7 +88,7 @@ export class BoardObject {
       }, -Math.PI / 2);
     }
   
-    // ✅ Top row (left to right)
+    // Top row (left to right)
     for (let i = 0; i < 11; i++) {
       this.addTile(tileData[tileIndex++], {
         x: startX + i,
@@ -97,7 +97,7 @@ export class BoardObject {
       }, Math.PI);
     }
   
-    // ✅ Right column (top to bottom)
+    // Right column (top to bottom)
     for (let i = 1; i < 10; i++) {
       this.addTile(tileData[tileIndex++], {
         x: startX + 10,
@@ -141,7 +141,7 @@ export class BoardObject {
       return worldPos;
     });
   
-    // Optionally remove and re-add if you don't want to keep it twice
+    
     //scene.remove(this.group);
   }
 }

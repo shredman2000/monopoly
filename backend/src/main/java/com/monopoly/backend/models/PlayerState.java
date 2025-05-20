@@ -23,7 +23,7 @@ public class PlayerState {
     private String username;
     private int position = 0;
     private int money = 1500; // starting money, change later
-    private String color = "black";
+    private String color;
 
     @ManyToOne
     @JoinColumn(name = "game_id")

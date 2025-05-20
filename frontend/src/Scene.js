@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import BuyPropertyPrompt from './components/BuyPropertyPrompt';
 import ShowUserInfo from './components/ShowUserInfo';
@@ -14,10 +15,16 @@ import PostMovePanel from './components/PostMovePanel';
 import useBoardScene from './hooks/useBoardScene';
 import usePlayerState from './hooks/usePlayerState';
 import useGameSocket from './hooks/useGameSocket';
+import MiniBoard from './components/MiniBoard';
+import TileDetailsPanel from './components/TileDetailsPanel';
+import { useSquareSize } from './hooks/useSquareSize';
+
+import './scene.css';
 function Scene() {
   const mountRef = useRef(null);
   const { gameId, username } = useLocation().state || {};
-
+  const [selectedTile, setSelectedTile] = useState(null);
+  const [miniBoardRef, miniBoardSize] = useSquareSize();
 
   const {
     turnIndex,
@@ -144,17 +151,75 @@ function Scene() {
       {paymentInfo?.type === 'free parking' && <UserRecievesMoney {...paymentInfo} />}
       {passedGo && <PassedGo user={userObj} />}
 
-      {inPostMoveState && (
-        <PostMovePanel
-          gameState={gameState}
-          username={username}
-          isMyTurn={isMyTurn}
-          onEndTurn={() => {
-            WebSocketService.send('/app/finalizeTurn', { gameId, username });
-            setInPostMoveState(false); // reset
+
+      
+    {inPostMoveState && (
+      <div className="scene-overlay-grid">
+        <div
+          ref={miniBoardRef}
+          style={{
+            gridColumn: '2 / 3',
+            gridRow: '1 / 2',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
           }}
-        />
-      )}
+        >
+          <div
+            style={{
+              width: `${miniBoardSize}px`,
+              height: `${miniBoardSize}px`,
+              background: 'rgba(255, 255, 255, 0.85)',
+              padding: '0.5rem',
+              borderRadius: '6px',
+              border: '1px solid #444',
+              boxSizing: 'border-box',
+            }}
+          >
+            <MiniBoard
+              tileStates={gameState.tileStates}
+              currentUsername={username}
+              onTileClick={(tile) => setSelectedTile(tile)}
+            />
+          </div>
+        </div>
+
+
+
+        {selectedTile && (
+          <div
+            className="tile-details-panel"
+            style={{
+              position: 'absolute',
+              bottom: '16rem',
+
+              zIndex: 30
+            }}
+          >
+            <h4>{selectedTile.tileName}</h4>
+            <p>Owner: {selectedTile.ownerUsername || 'Unowned'}</p>
+            <p>Price: ${selectedTile.price}</p>
+            <button onClick={() => setSelectedTile(null)}>Close</button>
+          </div>
+        )}
+
+
+        <div className="post-move-wrapper" style={{ pointerEvents: 'auto' }}>
+          <PostMovePanel
+            gameState={gameState}
+            username={username}
+            isMyTurn={isMyTurn}
+            onEndTurn={() => {
+              WebSocketService.send('/app/finalizeTurn', { gameId, username });
+              setInPostMoveState(false);
+              setSelectedTile(null);
+            }}
+          />
+        </div>
+      </div>
+    )}
+
+
       
     </>
   );

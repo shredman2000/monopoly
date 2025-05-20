@@ -45,7 +45,7 @@ export default function useGameSocket({
         game.playerStates.forEach((player, index) => {
           let piece = playerMapRef.current[player.username];
           if (!piece) {
-            piece = new GamePiece(['red', 'blue', 'green', 'yellow', 'pink', 'brown'][index % 6]);
+            piece = new GamePiece(new THREE.Color(player.color));
             sceneRef.current.add(piece.getObject3D());
             playerMapRef.current[player.username] = piece;
           }

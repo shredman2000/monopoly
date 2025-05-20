@@ -35,6 +35,8 @@ public class TileState {
     
     private int tileIndex;
 
+    private String color;
+
     private int houseCost;
     private int rent0House;
     private int rent1House;
@@ -79,7 +81,7 @@ public class TileState {
 
     // constructor for ownable tiles
     public TileState(String tileName, String type, int tileIndex, int price, Game game, int houseCost, int rent0House, 
-        int rent1House, int rent2House, int rent3House, int rent4House, int rentHotel, int costToMortgage) {
+        int rent1House, int rent2House, int rent3House, int rent4House, int rentHotel, int costToMortgage, String color) {
         this.tileName = tileName;
         this.type = type;
         this.tileIndex = tileIndex;
@@ -97,6 +99,7 @@ public class TileState {
         this.costToMortgage = costToMortgage;
         this.mortgaged = false;
         this.houseCount = 0;
+        this.color = color;
     }  
 
     //constructor for railroads
@@ -110,6 +113,7 @@ public class TileState {
         this.ownerUsername = null;
         this.costToMortgage = costToMortgage;
         this.mortgaged = false;
+        this.color = "black";
 
         // reuse fields
         this.rent0House = rent1;  // 1 RR owned
@@ -257,6 +261,12 @@ public class TileState {
         this.freeParkingTotal = freeParkingTotal;
     }
 
+    public String getColor() {
+        return color;
+    }
+    public void setColor(String color) {
+        this.color = color;
+    }
     
 
 }
