@@ -184,7 +184,8 @@ public class GameSocketController {
         int price = tile.getPrice();
         int playerBalance = player.getMoney();
         if (playerBalance < price) {
-            gameService.finalizeTurn(game, username);
+            gameService.postMoveState(game, username);
+            //gameService.finalizeTurn(game, username);
             return;
         }
         player.setMoney(playerBalance - price);
@@ -195,7 +196,8 @@ public class GameSocketController {
         gameRepository.save(game);
         System.out.println("<<<<<< TILE BOUGHT");
         //messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
-        gameService.finalizeTurn(game, username);
+        gameService.postMoveState(game, username);
+        //gameService.finalizeTurn(game, username);
 
     }
 
@@ -296,8 +298,8 @@ public class GameSocketController {
             gameRepository.save(game);
             
 
-
-            gameService.finalizeTurn(game, auction.getAuctionStarter());
+            gameService.postMoveState(game, auction.getAuctionStarter());
+            //gameService.finalizeTurn(game, auction.getAuctionStarter());
             Map<String, Object> endMessage = new HashMap<>();
             endMessage.put("action", "auction_won");
             endMessage.put("tileName", tileSold.getTileName());
@@ -347,8 +349,8 @@ public class GameSocketController {
         gameRepository.save(game);
 
         //messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
-
-        gameService.finalizeTurn(game, fromUser);
+        gameService.postMoveState(game, fromUser);
+        //gameService.finalizeTurn(game, fromUser);
     }
 
     @MessageMapping("/getGameState")
@@ -367,8 +369,8 @@ public class GameSocketController {
         String username = msg.get("username");
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) return;
-
-        gameService.finalizeTurn(game, username);
+        gameService.postMoveState(game, username);
+        //gameService.finalizeTurn(game, username);
     }
 
     public static class PlayerMoveMessage {

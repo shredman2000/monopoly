@@ -42,7 +42,6 @@ public class PlayerState {
         this.username = username;
         this.game = game;
     }
-
     public Boolean getCanRoll() {
         return canRoll;
     }

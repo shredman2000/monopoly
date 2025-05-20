@@ -82,6 +82,19 @@ public class GameService {
     }
 
     /**
+     * Handle actions in post move
+     * mortgage properties, trade other players,
+     * @param game
+     * @param username
+     * 
+     */
+    public void postMoveState(Game game, String username) {
+
+        
+        finalizeTurn(game, username);
+    }
+
+    /**
      * 
      * @params 
      */
@@ -115,8 +128,8 @@ public class GameService {
 
         switch(tileType) {
             case "go":
-                
-                finalizeTurn(game, username);
+                postMoveState(game, username);
+                //////finalizeTurn(game, username);
                 break;
             case "property":
                 // if unowned, give choice to buy
@@ -136,7 +149,8 @@ public class GameService {
                         // you own this
                         response.put("action", "continue");
 
-                        finalizeTurn(game, username);
+                        postMoveState(game, username);
+                        //finalizeTurn(game, username);
                         break;
                     }
                     else {
@@ -187,7 +201,8 @@ public class GameService {
                     response.put("type", "tax");
                     response.put("taxType", "income");
                     response.put("freeparkingtotal", freeParking.getFreeParkingTotal());
-                    finalizeTurn(game, username);
+                    postMoveState(game, username);
+                    //finalizeTurn(game, username);
                     break;
                 }
                 else if(landedTile.getTileName().equals("Luxury Tax")) { // pay 75
@@ -202,17 +217,20 @@ public class GameService {
                     response.put("type", "tax");
                     response.put("taxType", "luxury");
                     response.put("freeparkingtotal", freeParking.getFreeParkingTotal());
-                    finalizeTurn(game, username);
+                    postMoveState(game, username);
+                    //finalizeTurn(game, username);
                     break;
                 }
                 break;
             case "community_chest":
                 // draw card
-                finalizeTurn(game, username);
+                postMoveState(game, username);
+                //finalizeTurn(game, username);
                 break;
             case "chance":
                 // draw card
-                finalizeTurn(game, username);
+                postMoveState(game, username);
+                //finalizeTurn(game, username);
                 break;
             case "railroad": // check how many other railroads the player owns
                 if (!landedTile.isOwned()) { // buy property
@@ -286,7 +304,8 @@ public class GameService {
                         break;
                     }
                     else {// you own
-                        finalizeTurn(game, username);
+                        postMoveState(game, ownerUsername);
+                        //finalizeTurn(game, username);
                         break;
                     }
                 }
@@ -302,14 +321,17 @@ public class GameService {
                 response.put("amount", amountOnFreeParking);
                 response.put("freeparkingtotal",freeParkingTile.getFreeParkingTotal());
                 response.put("type", "free parking");
-                finalizeTurn(game, username);
+                postMoveState(game, username);
+                //finalizeTurn(game, username);
                 break;
             case "go_to_jail":
                 // update players pos to jail tile + set some ticker for 3 turns.
-                finalizeTurn(game, username);
+                postMoveState(game, username);
+                //finalizeTurn(game, username);
                 break;          
             case "jail":
-                finalizeTurn(game, username);
+                postMoveState(game, username);
+                //finalizeTurn(game, username);
                 break;
         }
         

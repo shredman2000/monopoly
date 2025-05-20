@@ -24,6 +24,7 @@ public class Game {
 
     private int turnIndex; // whose turn it is
     private boolean started;
+    private Boolean postMove = false;
 
     public String adminUsername;
 
@@ -123,5 +124,12 @@ public class Game {
 
     public String getAdmin() {
         return adminUsername;
+    }
+
+    public Boolean getPostMove() {
+        return this.postMove;
+    }
+    public void setPostMove(Boolean postMove) {
+        this.postMove = postMove;
     }
 }
