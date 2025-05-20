@@ -39,9 +39,12 @@ function Scene() {
     auctionData,
     setAuctionData,
     isMyTurn,
-    playerMapRef
+    playerMapRef,
+    canRoll,
+    setCanRoll,
   } = usePlayerState(username);
 
+  // create board camera and scene stuff
   const { sceneRef, cameraRef, boardRef } = useBoardScene(mountRef);
 
   useGameSocket({
@@ -58,14 +61,16 @@ function Scene() {
     setPassedGo,
     setUser,
     setAuctionData,
+    setCanRoll,
     playerMapRef,
     sceneRef,
     cameraRef,
     boardRef,
+
   });
 
   const handleRollDice = () => {
-    if (isMyTurn && !hasRolled) {
+    if (canRoll) {
       WebSocketService.send('/app/rollDice', { gameId, username });
       setHasRolled(true);
     }
@@ -75,7 +80,7 @@ function Scene() {
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
 
-      {isMyTurn && !hasRolled && (
+      {canRoll && !currentTileOptions &&(
         <button
           onClick={handleRollDice}
           style={{

@@ -21,6 +21,7 @@ export default function useGameSocket({
   sceneRef,
   cameraRef,
   boardRef,
+  setCanRoll
 }) {
   useEffect(() => {
     if (!gameId || !username) return;
@@ -40,7 +41,7 @@ export default function useGameSocket({
         game.playerStates.forEach((player, index) => {
           let piece = playerMapRef.current[player.username];
           if (!piece) {
-            piece = new GamePiece(['red', 'blue', 'green', 'yellow'][index % 4]);
+            piece = new GamePiece(['red', 'blue', 'green', 'yellow', 'pink', 'brown'][index % 6]);
             sceneRef.current.add(piece.getObject3D());
             playerMapRef.current[player.username] = piece;
           }
@@ -59,6 +60,7 @@ export default function useGameSocket({
         const currentPlayer = game.playerStates.find(p => p.username === username);
         if (currentPlayer) {
           setUserBalance(currentPlayer.money);
+          setCanRoll(currentPlayer.canRoll)
           const props = game.tileStates
             .filter(tile => tile.ownerUsername === username)
             .map(tile => tile.tileName);
@@ -89,6 +91,7 @@ export default function useGameSocket({
         }
 
         if (data.action === 'offer_purchase' && data.player === username) {
+          setCanRoll(false);
           setCurrentTileOptions({
             type: data.type || 'property',
             name: data.tileName,

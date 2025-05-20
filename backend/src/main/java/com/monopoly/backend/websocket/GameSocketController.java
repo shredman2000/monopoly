@@ -86,9 +86,12 @@ public class GameSocketController {
 
         game.setPlayerUsernames(players);
         game.setTurnIndex(0);
+
+        String firstPlayer = players.get(0);
         
         for (PlayerState playerState : game.getPlayerStates()) { //set each players position to the first tile.
             playerState.setPosition(0); 
+            if (firstPlayer.equals(playerState.getUsername())) { playerState.setCanRoll(true); }
         }
 
         gameRepository.save(game);
@@ -119,7 +122,9 @@ public class GameSocketController {
         int roll = dieOne + dieTwo;
         System.out.println("<<<<<<<<<<" + roll);
         int nextPos = (currPlayer.getPosition() + roll) % 40;
+        // TODO: handle snake eyes here
 
+        currPlayer.setCanRoll(false);
         // handlePlayerMove()
         currPlayer.setPosition(nextPos);
 

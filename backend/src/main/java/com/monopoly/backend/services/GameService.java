@@ -40,14 +40,44 @@ public class GameService {
     /**
      * Call this after everything that should end the players turn!!!
      */
+    /* 
     public void finalizeTurn(Game game, String username) {
         System.out.println("finalizing turn");
         int currentTurn = game.getTurnIndex();
         int totalPlayers = game.getPlayerStates().size();
         game.setTurnIndex((currentTurn + 1) % totalPlayers);
 
+        PlayerState thisPlayer = game.getPlayerStates().stream().filter(player -> player.getUsername().equals(username)).findFirst().orElse(null);
+        thisPlayer.setCanRoll(false);
+        String nextPlayerUsername = game.getPlayerUsernames().get(game.getTurnIndex());
+        PlayerState nextPlayer = game.getPlayerStates().stream().filter(player -> player.getUsername().equals(nextPlayerUsername)).findFirst().orElse(null);
+        nextPlayer.setCanRoll(true);
+
         gameRepository.save(game);
         
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
+    }*/
+    public void finalizeTurn(Game game, String username) {
+        System.out.println("finalizing turn");
+        int currentTurn = game.getTurnIndex();
+        int totalPlayers = game.getPlayerUsernames().size();
+        int nextTurnIndex = (currentTurn + 1) % totalPlayers;
+        game.setTurnIndex(nextTurnIndex);
+
+        // Clear current player's roll status
+        game.getPlayerStates().stream()
+            .filter(player -> player.getUsername().equals(username))
+            .findFirst()
+            .ifPresent(p -> p.setCanRoll(false));
+
+        // Set canRoll for the next player (based on usernames list)
+        String nextUsername = game.getPlayerUsernames().get(nextTurnIndex);
+        game.getPlayerStates().stream()
+            .filter(player -> player.getUsername().equals(nextUsername))
+            .findFirst()
+            .ifPresent(p -> p.setCanRoll(true));
+
+        gameRepository.save(game);
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
     }
 

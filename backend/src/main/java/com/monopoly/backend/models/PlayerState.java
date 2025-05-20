@@ -17,7 +17,7 @@ public class PlayerState {
     @GeneratedValue
     private Long id;
 
-
+    private Boolean canRoll = false;
 
     private String username;
     private int position = 0;
@@ -43,6 +43,12 @@ public class PlayerState {
         this.game = game;
     }
 
+    public Boolean getCanRoll() {
+        return canRoll;
+    }
+    public void setCanRoll(Boolean canRoll) {
+        this.canRoll = canRoll;
+    }
 
     public Long getId() {
         return id;
