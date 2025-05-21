@@ -193,37 +193,36 @@ function Scene() {
 
 
 
-        {selectedTile && (
-          <div
-            className="tile-details-panel"
-            style={{
-              position: 'absolute',
-              bottom: '16rem',
+      {selectedTile && (
+        <TileDetailsPanel
+          tile={selectedTile}
+          username={username}
+          onClose={() => setSelectedTile(null)}
+          onHouseBuild={(tile) => {
+            WebSocketService.send('/app/buildHouse', {
+              gameId,
+              username,
+              tileName: tile.tileName,
+            });
+            setSelectedTile(null);
+          }}
+        />
+      )}
 
-              zIndex: 30
-            }}
-          >
-            <h4>{selectedTile.tileName}</h4>
-            <p>Owner: {selectedTile.ownerUsername || 'Unowned'}</p>
-            <p>Price: ${selectedTile.price}</p>
-            <button onClick={() => setSelectedTile(null)}>Close</button>
-          </div>
-        )}
 
-
-        <div className="post-move-wrapper" style={{ pointerEvents: 'auto' }}>
-          <PostMovePanel
-            gameState={gameState}
-            username={username}
-            isMyTurn={isMyTurn}
-            onEndTurn={() => {
-              WebSocketService.send('/app/finalizeTurn', { gameId, username });
-              setInPostMoveState(false);
-              setSelectedTile(null);
-            }}
-          />
-        </div>
+      <div className="post-move-wrapper" style={{ pointerEvents: 'auto' }}>
+        <PostMovePanel
+          gameState={gameState}
+          username={username}
+          isMyTurn={isMyTurn}
+          onEndTurn={() => {
+            WebSocketService.send('/app/finalizeTurn', { gameId, username });
+            setInPostMoveState(false);
+            setSelectedTile(null);
+          }}
+        />
       </div>
+    </div>
     )}
 
 

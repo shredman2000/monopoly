@@ -164,6 +164,10 @@ public class GameService {
             else {
                 tile.setCanPlaceHouse(false);
             }
+
+            if (player.getMoney() < tile.getHouseCost()) {
+                tile.setCanPlaceHouse(false);
+            }
                 
                 
         }

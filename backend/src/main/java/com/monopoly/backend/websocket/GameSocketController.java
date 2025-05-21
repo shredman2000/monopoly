@@ -385,6 +385,34 @@ public class GameSocketController {
         gameService.finalizeTurn(game, username);
     }
 
+
+    @MessageMapping("/buildHouse")
+    public void buildHouse(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+        String username = msg.get("username");
+        String tileName = msg.get("tileName");
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) return;
+
+        PlayerState ps = game.getPlayerStates().stream().filter(player -> player.getUsername().equals(username)).findFirst().orElse(null);
+        TileState ts = game.getTileStates().stream().filter(tile -> tile.getTileName().equals(tileName)).findFirst().orElse(null);
+         if (ps == null || ts == null) return;
+
+        int houseCost = ts.getHouseCost();
+
+        
+
+        ps.setMoney(ps.getMoney() - houseCost);
+        ts.setHouseCount(ts.getHouseCount() + 1);
+
+        gameService.updateHousePlacement(game, username);
+        
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+    }
+
+
     public static class PlayerMoveMessage {
         private String gameId;
         private String username;
