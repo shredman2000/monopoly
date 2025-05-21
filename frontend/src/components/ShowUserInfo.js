@@ -4,7 +4,6 @@ import './ShowUserInfo.css';
 export default function ShowUserInfo({ username, balance, ownedProperties }) {
   return (
     <div className="user-info-box">
-      <h3>{username}'s Info</h3>
       <p><strong>Balance:</strong> ${balance}</p>
       <p><strong>Properties:</strong></p>
       <ul>

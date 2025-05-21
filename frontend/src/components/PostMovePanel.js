@@ -1,9 +1,9 @@
 import React from 'react'; 
 import { useState } from 'react';
-
+import TradePanel from './TradePanel';
 import MiniBoard from './MiniBoard';
 
-export default function PostMovePanel({ onEndTurn, gameState, username, isMyTurn }) {
+export default function PostMovePanel({ onEndTurn, gameState, username, isMyTurn, onClickTrade }) {
 
   const currentPlayerUsername = gameState?.playerUsernames?.[gameState.turnIndex];
   const currentPlayerState = gameState?.playerStates?.find(p => p.username === currentPlayerUsername);
@@ -30,7 +30,7 @@ export default function PostMovePanel({ onEndTurn, gameState, username, isMyTurn
       )}
       <p>Current Player: {currentPlayerUsername}</p>
       <p>Money: ${currentPlayerState?.money}</p>
-
+      <button onClick={onClickTrade} disabled={!isMyTurn}>Trade</button>
       <button onClick={onEndTurn} disabled={!isMyTurn}>
         End Turn
       </button>

@@ -64,3 +64,18 @@
   align-items: center;
   overflow: hidden;
 }
+
+.trading-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90vw;
+  height: 80vh;
+  z-index: 100;
+  background-color: cornsilk;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}

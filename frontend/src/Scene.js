@@ -10,6 +10,7 @@ import UserRecievesMoney from './components/UserRecievesMoney';
 import PassedGo from './components/PassedGo';
 import WebSocketService from './WebSocketService';
 import PostMovePanel from './components/PostMovePanel';
+import TradePlayerPanel from './components/TradePlayerPanel';
 
 
 import useBoardScene from './hooks/useBoardScene';
@@ -20,11 +21,15 @@ import TileDetailsPanel from './components/TileDetailsPanel';
 import { useSquareSize } from './hooks/useSquareSize';
 
 import './scene.css';
+import TradePanel from './components/TradePanel';
 function Scene() {
   const mountRef = useRef(null);
   const { gameId, username } = useLocation().state || {};
   const [selectedTile, setSelectedTile] = useState(null);
   const [miniBoardRef, miniBoardSize] = useSquareSize();
+  const [canTrade, setCanTrade] = useState(null);
+  const [trading, setTrading] = useState(null);
+  const [tradingPlayer, setTradingPlayer] = useState(null);
 
   const {
     turnIndex,
@@ -215,6 +220,7 @@ function Scene() {
           gameState={gameState}
           username={username}
           isMyTurn={isMyTurn}
+          onClickTrade={() => setTrading(true)}
           onEndTurn={() => {
             WebSocketService.send('/app/finalizeTurn', { gameId, username });
             setInPostMoveState(false);
@@ -222,6 +228,33 @@ function Scene() {
           }}
         />
       </div>
+
+      {trading && (
+        <div>
+          <TradePanel
+            currentUsername={username}
+            gameState={gameState}
+            onTradingWithPlayer={(name) => {
+              WebSocketService.send('/app/trading', { gameId, username, name })
+              setTrading(false);
+              setTradingPlayer(name);
+            }}
+          />
+        </div>
+      )}
+
+      {tradingPlayer && (
+        <div>
+          <TradePlayerPanel
+            gameState={gameState}
+            otherPlayer={tradingPlayer}
+            currentUsername={username}
+          />
+
+        </div>
+      )}
+
+
     </div>
     )}
 

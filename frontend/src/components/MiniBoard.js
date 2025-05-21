@@ -25,4 +25,4 @@ export default function MiniBoard({ tileStates, currentUsername, onTileClick}) {
         })}
         </div>
     );
-}
+}   

@@ -1,0 +1,13 @@
+.trade-panel {
+    position: fixed;
+    aspect-ratio: 16/9;
+    z-index: 100;
+    background-color: cornsilk;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.unowned-trading {
+    
+}
