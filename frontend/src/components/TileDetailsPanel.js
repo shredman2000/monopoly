@@ -14,7 +14,13 @@ export default function TileDetailsPanel({ tile, username, onClose, onHouseBuild
       {tile.price && <p>Price: ${tile.price}</p>}
 
 
-      <p>House cost: {tile.houseCost}</p>
+      <h3> House cost: {tile.houseCost}</h3>
+      <p  style={{ fontWeight: tile.houseCount === 0 ? 'bold' : 'normal' }}>Rent with 0 Houses: {tile.rent0House}</p>
+      <p  style={{ fontWeight: tile.houseCount === 1 ? 'bold' : 'normal' }}>Rent with 1 Houses: {tile.rent1House}</p>
+      <p  style={{ fontWeight: tile.houseCount === 2 ? 'bold' : 'normal' }}>Rent with 2 Houses: {tile.rent2House}</p>
+      <p  style={{ fontWeight: tile.houseCount === 3 ? 'bold' : 'normal' }}>Rent with 3 Houses: {tile.rent3House}</p>
+      <p  style={{ fontWeight: tile.houseCount === 4 ? 'bold' : 'normal' }}>Rent with 4 Houses: {tile.rent4House}</p>
+      <p  style={{ fontWeight: tile.houseCount === 5 ? 'bold' : 'normal' }}>Rent with Hotel: {tile.rentHotel}</p>
       <button
         onClick={() => onHouseBuild(tile)}
         disabled={!canBuild}

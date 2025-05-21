@@ -158,7 +158,7 @@ public class GameService {
 
             
                 
-            if (currHouses == minHouseCount || currHouses == maxHouseCount - 1) {
+            if (currHouses == minHouseCount) {
                 tile.setCanPlaceHouse(true);
             }
             else {
