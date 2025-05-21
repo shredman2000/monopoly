@@ -116,7 +116,7 @@ function Scene() {
         </button>
       )}
 
-      {currentTileOptions?.type === 'property' && (
+      {['property', 'railroad', 'utility'].includes(currentTileOptions?.type) && (
         <BuyPropertyPrompt
           tileName={currentTileOptions.name}
           price={currentTileOptions.price}
@@ -156,33 +156,40 @@ function Scene() {
     {inPostMoveState && (
       <div className="scene-overlay-grid">
         <div
-          ref={miniBoardRef}
+        ref={miniBoardRef}
+        style={{
+          gridColumn: '2 / 3',
+          gridRow: '1 / 2',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          boxSizing: 'border-box',
+          padding: '1rem',
+        }}
+      >
+        <div
           style={{
-            gridColumn: '2 / 3',
-            gridRow: '1 / 2',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            width: '100%',
+            aspectRatio: '1',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            background: 'rgba(255, 255, 255, 0.85)',
+            padding: '0.5rem',
+            borderRadius: '6px',
+            border: '1px solid #444',
+            boxSizing: 'border-box',
           }}
         >
-          <div
-            style={{
-              width: `${miniBoardSize}px`,
-              height: `${miniBoardSize}px`,
-              background: 'rgba(255, 255, 255, 0.85)',
-              padding: '0.5rem',
-              borderRadius: '6px',
-              border: '1px solid #444',
-              boxSizing: 'border-box',
-            }}
-          >
-            <MiniBoard
-              tileStates={gameState.tileStates}
-              currentUsername={username}
-              onTileClick={(tile) => setSelectedTile(tile)}
-            />
-          </div>
+          <MiniBoard
+            tileStates={gameState.tileStates}
+            currentUsername={username}
+            onTileClick={(tile) => setSelectedTile(tile)}
+          />
         </div>
+      </div>
+   
 
 
 

@@ -3,6 +3,7 @@ package com.monopoly.backend.services;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -98,10 +99,80 @@ public class GameService {
             .findFirst()
             .ifPresent(p -> p.setInPostMove(true));
         
+        updateHousePlacement(game, username);
+        
         gameRepository.save(game);
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
         //finalizeTurn(game, username);
     }
+
+
+    /**
+     * update whether houses can be placed on tiles
+     * needs to check:
+     *     - all of the other colored tiles are owned by the player
+     *     - either
+     *           - all the tiles have the same number of houses
+     *           - or, the tile has 1 less house
+     *     - tile has less than 5 houses
+     *     - there are houses available to place?
+     */
+    public void updateHousePlacement(Game game, String username) {
+        List<TileState> tileStates = game.getTileStates();
+        PlayerState player = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+
+        for (TileState tile : tileStates) {
+            String color = tile.getColor();
+            int currHouses = tile.getHouseCount();
+            if (currHouses == 5) { 
+                tile.setCanPlaceHouse(false); 
+                continue; 
+            }
+
+            if (color == null || !"property".equals(tile.getType())) {
+                continue; // skip utilities and other tiles
+            }
+            List<TileState> sameColorTiles = game.getTileStates().stream()
+                .filter(t -> color != null && color.equals(t.getColor()))
+                .collect(Collectors.toList());
+
+            boolean ownsAll = sameColorTiles.stream()
+                .allMatch(t -> username.equals(t.getOwnerUsername()));
+            
+                // logic for updating whether a tile can have a house placed by the user right now.
+            if (!ownsAll) {
+                tile.setCanPlaceHouse(false);
+                continue;
+            }   
+                
+            // check whether the current tile has less than or the same number of houses as the other tiles
+            int minHouseCount = sameColorTiles.stream()
+                .mapToInt(TileState::getHouseCount)
+                .min()
+                .orElse(0);
+
+            int maxHouseCount = sameColorTiles.stream()
+                .mapToInt(TileState::getHouseCount)
+                .max()
+                .orElse(0);
+
+            
+                
+            if (currHouses == minHouseCount || currHouses == maxHouseCount - 1) {
+                tile.setCanPlaceHouse(true);
+            }
+            else {
+                tile.setCanPlaceHouse(false);
+            }
+                
+                
+        }
+          
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
+
+    }
+
 
     /**
      * 

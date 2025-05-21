@@ -10,7 +10,6 @@ export default function TileDetailsPanel({ tile, username, onClose }) {
       <p>Type: {tile.type}</p>
       {tile.ownerUsername && <p>Owner: {tile.ownerUsername}</p>}
       {tile.price && <p>Price: ${tile.price}</p>}
-      
       <button onClick={onClose}>Close</button>
     </div>
   );

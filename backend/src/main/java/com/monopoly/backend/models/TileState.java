@@ -54,6 +54,8 @@ public class TileState {
 
     private int freeParkingTotal;
 
+    private boolean canPlaceHouse = false;
+
     @ManyToOne
     @JoinColumn(name = "game_id")
     @JsonBackReference
@@ -266,6 +268,13 @@ public class TileState {
     }
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public Boolean getCanPlaceHouse() {
+        return canPlaceHouse;
+    }
+    public void setCanPlaceHouse(Boolean canPlaceHouse) {
+        this.canPlaceHouse = canPlaceHouse;
     }
     
 
