@@ -260,6 +260,9 @@ function Scene() {
             onRemoveTileFromTrade={(tileName, tileOwner) => {
               WebSocketService.send('/app/removeTile', {gameId, tileOwner, tileName});
             }}
+            onChangeMoney={(name, val) => {
+              WebSocketService.send('/app/setMoney', {gameId, name, val});
+            }}
           />
 
         </div>

@@ -534,8 +534,8 @@ public class GameSocketController {
     @MessageMapping("/setMoney")
     public void addMoneyToTrade(Map<String, String> msg) {
         String gameId = msg.get("gameId");
-        String moneyFrom = msg.get("moneyFrom");
-        int money = Integer.parseInt(msg.get("money"));
+        String moneyFrom = msg.get("name");
+        int money = Integer.parseInt(msg.get("val"));
 
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {return;}
@@ -550,6 +550,14 @@ public class GameSocketController {
         }
 
         tradeStateRepository.save(tradeState);
+        game.setTradeState(tradeState);
+        gameRepository.save(game);
+        try {
+            String json = new ObjectMapper().writeValueAsString(tradeState);
+            messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
     }
 

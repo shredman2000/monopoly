@@ -2,14 +2,14 @@ import React from "react";
 import './TradePanel.css';
 import '../scene.css'
 
-export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, onRemoveTileFromTrade, tradeState}) {
+export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, onRemoveTileFromTrade, onChangeMoney, tradeState}) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
 
     const tradingLayout = {
         display: 'grid',
         gridTemplateColumns: `1fr 1fr`,
-        gridTemplateRows: '10% 10% 1fr 1fr 5%',
+        gridTemplateRows: '10% 10% 10% 1fr 1fr 5%',
         width: '100%',
         height: '100%', 
     }
@@ -89,12 +89,39 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                             <h3>{name}'s collection</h3>
                             <p>Balance: {playerBalance}</p>
                         </div>
+                        {/* Row 3: money slider */}
+                        <div style={{
+                            gridColumn: `${index + 1} / ${index + 2}`,
+                            gridRow: '3 / 4',
+                            padding: '0.5rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            }}>
+                            
+                            <input
+                                type="range"
+                                min="0"
+                                defaultValue={0}
+                                max={playerBalance}
+                                value={name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
+                                onChange={(e) => {
+                                onChangeMoney(name, parseInt(e.target.value, 10));
+                                }}
+                                style={{ width: '80%' }}
+                            />
+                            <label>
+                                Offering ${name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
+                            </label>
+                        </div>
 
-                        {/* Row 2: owned ttiles */}
+                        {/* Row 4: owned ttiles */}
                         <div
                             style={{
                                 gridColumn: `${index + 1} / ${index + 2}`,
-                                gridRow: '3 / 4',
+                                gridRow: '4 / 5',
                                 padding: '1rem',
                                 overflow: 'auto',
                                 border: '1px solid #aaa',
@@ -152,7 +179,7 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                         <div
                             style={{
                                 gridColumn: `${index + 1} / ${index + 2}`,
-                                gridRow: '4 / 5',
+                                gridRow: '5 / 6',
                                 padding: '1rem',
                                 border: '1px solid #666',
                                 display: 'flex',
