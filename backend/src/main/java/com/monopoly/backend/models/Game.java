@@ -35,6 +35,9 @@ public class Game {
     @OneToOne(mappedBy="game", cascade=CascadeType.ALL, orphanRemoval=true, fetch=FetchType.EAGER)
     private AuctionState auctionState;
 
+    @OneToOne(mappedBy="game", cascade=CascadeType.ALL, orphanRemoval=true, fetch=FetchType.EAGER)
+    private TradeState tradeState;
+
     int numPlayers;
 
     @ElementCollection(fetch= FetchType.EAGER)
@@ -131,5 +134,13 @@ public class Game {
     }
     public void setPostMove(Boolean postMove) {
         this.postMove = postMove;
+    }
+
+    public TradeState getTradeState() {
+        return tradeState;
+    }
+
+    public void setTradeState(TradeState tradeState) {
+        this.tradeState = tradeState;
     }
 }

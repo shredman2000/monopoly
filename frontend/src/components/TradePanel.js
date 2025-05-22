@@ -17,7 +17,7 @@ export default function TradePanel({ gameState, currentUsername, onTradingWithPl
         { tileName: 'Mediterranean Avenue', color: 'brown', col: 2, row: 2},
         { tileName: 'Baltic Avenue', color: 'brown', col: 3, row: 2},
         { tileName: 'Oriental Avenue', color: 'lightblue', col: 6 , row: 2},
-        { tileName: 'Vermont Avenue', color: '', col: 7, row: 2},
+        { tileName: 'Vermont Avenue', color: 'lightblue', col: 7, row: 2},
         { tileName: 'Connecticut Avenue', color: 'lightblue', col: 8 , row: 2},
         { tileName: 'St. Charles Place', color: 'pink', col: 10, row: 2},
         { tileName: 'States Avenue', color: 'pink', col: 11, row: 2},

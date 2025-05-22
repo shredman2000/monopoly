@@ -2,13 +2,13 @@ import React from "react";
 import './TradePanel.css';
 import '../scene.css'
 
-export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name}) {
+export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, tradeState}) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
 
     const tradingLayout = {
         display: 'grid',
-        gridTemplateColumns: `1fr 1fr)`,
+        gridTemplateColumns: `1fr 1fr`,
         gridTemplateRows: '10% 10% 1fr 1fr 5%',
         width: '100%',
         height: '100%', 
@@ -17,7 +17,7 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
         { tileName: 'Mediterranean Avenue', color: 'brown', col: 2, row: 2},
         { tileName: 'Baltic Avenue', color: 'brown', col: 3, row: 2},
         { tileName: 'Oriental Avenue', color: 'lightblue', col: 6 , row: 2},
-        { tileName: 'Vermont Avenue', color: '', col: 7, row: 2},
+        { tileName: 'Vermont Avenue', color: 'lightblue', col: 7, row: 2},
         { tileName: 'Connecticut Avenue', color: 'lightblue', col: 8 , row: 2},
         { tileName: 'St. Charles Place', color: 'pink', col: 10, row: 2},
         { tileName: 'States Avenue', color: 'pink', col: 11, row: 2},
@@ -109,16 +109,24 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                             const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
                             return (
                                 <div
-                                key={tile.tileName}
-                                style={{
-                                    gridColumn: tile.col,
-                                    gridRow: tile.row,
-                                    backgroundColor: ownsTile ? 'white' : '#404040',
-                                    border: '1px solid #999',
-                                    borderRadius: '4px',
-                                    position: 'relative',
-                                    opacity: ownsTile ? 1 : 0.3,
-                                }}
+                                    key={tile.tileName}
+                                    style={{
+                                        gridColumn: tile.col,
+                                        gridRow: tile.row,
+                                        backgroundColor: ownsTile ? 'white' : '#404040',
+                                        border: '1px solid #999',
+                                        borderRadius: '4px',
+                                        position: 'relative',
+                                        opacity: ownsTile ? 1 : 0.3,
+                                        cursor: ownsTile ? 'pointer' : 'default'
+                                    }}
+                                    onClick={() => {
+                                        const matched = ownedTiles.find(t => t.tileName === tile.tileName);
+                                        const tileOwner = matched?.ownerUsername;
+                                        if (tileOwner) {
+                                            onAddTileToTrade(tile.tileName, tileOwner);
+                                        }
+                                    }}
                                 >
                                 {/* color bar */}
                                 <div
@@ -133,6 +141,31 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                                 </div>
                             );
                             })}
+                        </div>
+
+                        <div
+                            style={{
+                                gridColumn: `${index + 1} / ${index + 2}`,
+                                gridRow: '4 / 5',
+                                padding: '1rem',
+                                border: '1px solid #666',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                overflowY: 'auto',
+                            }}
+                            >
+                            <h4>Offering:</h4>
+                            {
+                                tradeState &&
+                                Array.isArray(name === tradeState.player1 ? tradeState.tilesOffered1 : tradeState.tilesOffered2) &&
+                                (name === tradeState.player1 ? tradeState.tilesOffered1 : tradeState.tilesOffered2).map(tile => (
+                                    <div key={tile.tileName} style={{ /* styling */ }}>
+                                    {tile.tileName}
+                                    </div>
+                                ))
+                            }
                         </div>
                         </React.Fragment>
                         

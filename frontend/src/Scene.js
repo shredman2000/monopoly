@@ -19,6 +19,7 @@ import useGameSocket from './hooks/useGameSocket';
 import MiniBoard from './components/MiniBoard';
 import TileDetailsPanel from './components/TileDetailsPanel';
 import { useSquareSize } from './hooks/useSquareSize';
+import useTradeSocket from './hooks/useTradeSocket';
 
 import './scene.css';
 import TradePanel from './components/TradePanel';
@@ -30,6 +31,8 @@ function Scene() {
   const [canTrade, setCanTrade] = useState(null);
   const [trading, setTrading] = useState(null);
   const [tradingPlayer, setTradingPlayer] = useState(null);
+  const [tradeState, setTradeState] = useState(null);
+
 
   const {
     turnIndex,
@@ -64,6 +67,7 @@ function Scene() {
 
   // create board camera and scene stuff
   const { sceneRef, cameraRef, boardRef } = useBoardScene(mountRef);
+  useTradeSocket(gameId, setTradeState);
 
   useGameSocket({
     gameId,
@@ -235,7 +239,7 @@ function Scene() {
             currentUsername={username}
             gameState={gameState}
             onTradingWithPlayer={(name) => {
-              WebSocketService.send('/app/trading', { gameId, username, name })
+              WebSocketService.send('/app/startTrade', { gameId, username, name })
               setTrading(false);
               setTradingPlayer(name);
             }}
@@ -249,6 +253,11 @@ function Scene() {
             gameState={gameState}
             otherPlayer={tradingPlayer}
             currentUsername={username}
+            tradeState={tradeState}
+
+            onAddTileToTrade={(tileName, tileOwner) => {
+              WebSocketService.send('/app/addTile', {gameId, tileOwner, tileName});
+            }}
           />
 
         </div>
