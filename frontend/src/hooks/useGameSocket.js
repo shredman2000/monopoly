@@ -34,7 +34,7 @@ export default function useGameSocket({
         if (!game || !game.playerStates) return;
 
         setGameState(game); // store full game image
-
+        setTradeState(game.tradeState);
         setTurnIndex(game.turnIndex);
         setPlayerUsernames(game.playerUsernames);
 

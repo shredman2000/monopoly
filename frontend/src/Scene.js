@@ -246,7 +246,7 @@ function Scene() {
         </div>
       )}
 
-      {tradingPlayer && (
+      {tradeState && (
         <div>
           <TradePlayerPanel
             gameState={gameState}
@@ -262,6 +262,9 @@ function Scene() {
             }}
             onChangeMoney={(name, val) => {
               WebSocketService.send('/app/setMoney', {gameId, name, val});
+            }}
+            onSendTrade={() => {
+              WebSocketService.send('/app/sendTrade', { gameId });
             }}
           />
 

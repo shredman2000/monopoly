@@ -2,11 +2,21 @@ import React, {useState} from "react";
 import './TradePanel.css';
 import '../scene.css'
 
-export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, onRemoveTileFromTrade, onChangeMoney, tradeState}) {
+export default function TradePlayerPanel({ 
+    gameState, 
+    currentUsername, 
+    otherPlayer: name, 
+    onAddTileToTrade, 
+    onRemoveTileFromTrade, 
+    onSendTrade, 
+    onChangeMoney, 
+    tradeState
+}) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
     const [tempSliderValue, setTempSliderValue] = useState(0);
     const [sliderValues, setSliderValues] = useState({});
+    const isMyTurnToEdit = currentUsername === tradeState?.currentOfferingPlayer;
 
 
 
@@ -120,6 +130,7 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                                 min="0"
                                 defaultValue={0}
                                 max={playerBalance}
+                                disabled={tradeState?.tradeSent || !isMyTurnToEdit}
                                 value={sliderValues[name] ?? 0}
                                 onChange={(e) => {
                                     const newVal = parseInt(e.target.value, 10);
@@ -166,8 +177,11 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                                             borderRadius: '4px',
                                             position: 'relative',
                                             opacity: ownsTile ? 1 : 0.3,
-                                            cursor: ownsTile ? 'pointer' : 'default'
+                                            cursor: ownsTile && isMyTurnToEdit && !tradeState?.tradeSent ? 'pointer' : 'not-allowed'
+
+
                                         }}
+            
                                         onClick={() => {
                                             const matched = ownedTiles.find(t => t.tileName === tile.tileName);
                                             const tileOwner = matched?.ownerUsername;
@@ -222,6 +236,35 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                                 ))
                             }
                         </div>
+                        
+                        {/* send trade */}
+                        {!tradeState.tradeSent && isMyTurnToEdit && 
+                            <div 
+                                
+                                    style={{
+                                        gridColumn: `1/3`,
+                                        gridRow: '6/7',
+                                        justifyContent: 'center',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        textAlign: 'center',
+                                        fontSize: '15',
+                                    }}>
+                                    <button onClick={() => {
+                                        onSendTrade();
+                                        
+                                    }}
+                                    style={{ fontSize: 20 }}
+                                    >Send Trade</button>
+                            </div>
+                        }
+
+                        {/* buttons to accept, reject, or edit trade */}
+
+
+
+
                         </React.Fragment>
                         
                     );

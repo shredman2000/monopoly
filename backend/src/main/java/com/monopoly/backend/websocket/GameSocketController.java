@@ -439,10 +439,12 @@ public class GameSocketController {
         tradeStateRepository.findByGame_GameId(gameId).ifPresent(tradeStateRepository::delete);
         TradeState tradeState = new TradeState(game, player1, player2, player1);
 
-
-
+        game.setTradeState(tradeState);
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
         tradeStateRepository.save(tradeState);
         messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+        
     }
 
     @MessageMapping("/addTile")
@@ -528,7 +530,7 @@ public class GameSocketController {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        //messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
     }
 
     @MessageMapping("/setMoney")
@@ -558,7 +560,7 @@ public class GameSocketController {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-        messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
     }
 
     @MessageMapping("/sendTrade")
@@ -578,6 +580,7 @@ public class GameSocketController {
 
         tradeStateRepository.save(tradeState);
         messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+
     }
 
     @MessageMapping("/editTrade")
@@ -591,6 +594,7 @@ public class GameSocketController {
         TradeState tradeState = game.getTradeState();
         if (tradeState == null) return;
 
+        tradeState.setTradeSent(false);
         String current = tradeState.getCurrentOfferingPlayer();
         String newOfferer = editor.equals(tradeState.getPlayer1()) ? tradeState.getPlayer2() : tradeState.getPlayer1();
         tradeState.setCurrentOfferingPlayer(newOfferer);
