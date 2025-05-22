@@ -19,7 +19,6 @@ import useGameSocket from './hooks/useGameSocket';
 import MiniBoard from './components/MiniBoard';
 import TileDetailsPanel from './components/TileDetailsPanel';
 import { useSquareSize } from './hooks/useSquareSize';
-import useTradeSocket from './hooks/useTradeSocket';
 
 import './scene.css';
 import TradePanel from './components/TradePanel';
@@ -67,7 +66,6 @@ function Scene() {
 
   // create board camera and scene stuff
   const { sceneRef, cameraRef, boardRef } = useBoardScene(mountRef);
-  useTradeSocket(gameId, setTradeState);
 
   useGameSocket({
     gameId,
@@ -90,6 +88,7 @@ function Scene() {
     cameraRef,
     boardRef,
     setGameState,
+    setTradeState,
   });
 
   const handleRollDice = () => {

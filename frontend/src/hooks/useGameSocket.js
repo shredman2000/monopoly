@@ -24,6 +24,7 @@ export default function useGameSocket({
   setCanRoll,
   setGameState,
   setInPostMoveState,
+  setTradeState,
 }) {
   useEffect(() => {
     if (!gameId || !username) return;
@@ -142,6 +143,15 @@ export default function useGameSocket({
           setAuctionData(data);
         }
       });
+
+      WebSocketService.subscribe(`/topic/tradeUpdates/${gameId}`, (message) => {
+        console.log(">>>>>>>>>>>>>>>>>>Received trade update", message.body);
+        //const parsed = JSON.parse(message.body);
+        setTradeState(message);
+      });
+
+
+
 
       WebSocketService.send('/app/getGameState', { gameId });
     });

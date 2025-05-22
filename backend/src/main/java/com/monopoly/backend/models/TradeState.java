@@ -59,6 +59,8 @@ public class TradeState {
 
     private boolean tradeSent;
 
+    private int count;
+
     public TradeState() {}
 
     public TradeState(Game game, String player1, String player2, String currentOfferingPlayer) {
@@ -73,6 +75,7 @@ public class TradeState {
         this.player1Confirmed = false;
         this.player2Confirmed = false;
         this.tradeSent = false;
+        this.count = 0;
     }
 
     public void setGame(Game game) {
@@ -176,6 +179,10 @@ public class TradeState {
     }
     public Boolean getTradeSent() {
         return tradeSent;
+    }
+
+    public void incrementCount() {
+        this.count += 1;
     }
 
 

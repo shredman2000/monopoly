@@ -13,6 +13,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monopoly.backend.models.AuctionState;
 import com.monopoly.backend.models.Game;
 import com.monopoly.backend.models.PlayerState;
@@ -447,27 +450,53 @@ public class GameSocketController {
         String gameId = msg.get("gameId");
         String tileOwner = msg.get("tileOwner");
         String tileName = msg.get("tileName");
-
+        
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {return;}
 
         Optional<TradeState> optTradeState = tradeStateRepository.findByGame_GameId(gameId);
         if (optTradeState.isEmpty()) { return; }
         TradeState tradeState = optTradeState.get();
-        
+
+        System.out.println(">>>>>>>>>> Sending trade update to /topic/tradeUpdates/" + gameId);
+        try {
+            System.out.println(new ObjectMapper().writeValueAsString(tradeState));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+
 
         TileState tile = game.getTileStates().stream().filter(t -> t.getTileName().equals(tileName)).findFirst().orElse(null);
+
+        boolean alreadyOffered = tradeState.getTilesOffered1().stream()
+            .anyMatch(t -> t.getTileName().equals(tileName)) ||
+            tradeState.getTilesOffered2().stream()
+            .anyMatch(t -> t.getTileName().equals(tileName));
+
+        if (alreadyOffered){ return; }
+
         if (tileOwner.equals(tradeState.getPlayer1())) {
             tradeState.addTileOffered1(tile);
         } else if (tileOwner.equals(tradeState.getPlayer2())) {
             tradeState.addTileOffered2(tile);
         }
+
+
+        //debugging
+        tradeState.incrementCount();
+
+
         tradeState = tradeStateRepository.save(tradeState);
         game.setTradeState(tradeState);
         gameRepository.save(game);
-        
-        messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
-
+        try {
+            String json = new ObjectMapper().writeValueAsString(tradeState);
+            messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        //messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
     }
 
     @MessageMapping("/removeTile")
