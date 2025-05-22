@@ -2,7 +2,7 @@ import React from "react";
 import './TradePanel.css';
 import '../scene.css'
 
-export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, tradeState}) {
+export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, onRemoveTileFromTrade, tradeState}) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
 
@@ -106,40 +106,46 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                             }}
                         >
                             {ownableTiles.map(tile => {
-                            const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
-                            return (
-                                <div
-                                    key={tile.tileName}
-                                    style={{
-                                        gridColumn: tile.col,
-                                        gridRow: tile.row,
-                                        backgroundColor: ownsTile ? 'white' : '#404040',
-                                        border: '1px solid #999',
-                                        borderRadius: '4px',
-                                        position: 'relative',
-                                        opacity: ownsTile ? 1 : 0.3,
-                                        cursor: ownsTile ? 'pointer' : 'default'
-                                    }}
-                                    onClick={() => {
-                                        const matched = ownedTiles.find(t => t.tileName === tile.tileName);
-                                        const tileOwner = matched?.ownerUsername;
-                                        if (tileOwner) {
-                                            onAddTileToTrade(tile.tileName, tileOwner);
-                                        }
-                                    }}
-                                >
-                                {/* color bar */}
-                                <div
-                                    style={{
-                                    backgroundColor: tile.color,
-                                    height: '10%',
-                                    width: '100%',
-                                    borderTopLeftRadius: '4px',
-                                    borderTopRightRadius: '4px',
-                                    }}
-                                />
-                                </div>
-                            );
+                                const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
+                                const isInTrade = (tradeState?.tilesOffered1 || []).some(t => t.tileName === tile.tileName)
+                                                || (tradeState?.tilesOffered2 || []).some(t => t.tileName === tile.tileName);
+                                return (
+                                    <div
+                                        key={tile.tileName}
+                                        style={{
+                                            gridColumn: tile.col,
+                                            gridRow: tile.row,
+                                            backgroundColor: ownsTile ? 'white' : '#404040',
+                                            border: `2px solid ${isInTrade ? 'green' : '#999'}`,
+                                            borderRadius: '4px',
+                                            position: 'relative',
+                                            opacity: ownsTile ? 1 : 0.3,
+                                            cursor: ownsTile ? 'pointer' : 'default'
+                                        }}
+                                        onClick={() => {
+                                            const matched = ownedTiles.find(t => t.tileName === tile.tileName);
+                                            const tileOwner = matched?.ownerUsername;
+
+                                            if (tileOwner && !isInTrade) {
+                                                onAddTileToTrade(tile.tileName, tileOwner);
+                                            }
+                                            else if (tileOwner && isInTrade) {
+                                                onRemoveTileFromTrade(tile.tileName, tileOwner);
+                                            }
+                                        }}
+                                    >
+                                    {/* color bar */}
+                                    <div
+                                        style={{
+                                        backgroundColor: tile.color,
+                                        height: '10%',
+                                        width: '100%',
+                                        borderTopLeftRadius: '4px',
+                                        borderTopRightRadius: '4px',
+                                        }}
+                                    />
+                                    </div>
+                                );
                             })}
                         </div>
 

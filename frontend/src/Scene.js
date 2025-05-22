@@ -257,6 +257,9 @@ function Scene() {
             onAddTileToTrade={(tileName, tileOwner) => {
               WebSocketService.send('/app/addTile', {gameId, tileOwner, tileName});
             }}
+            onRemoveTileFromTrade={(tileName, tileOwner) => {
+              WebSocketService.send('/app/removeTile', {gameId, tileOwner, tileName});
+            }}
           />
 
         </div>

@@ -145,7 +145,7 @@ export default function useGameSocket({
       });
 
       WebSocketService.subscribe(`/topic/tradeUpdates/${gameId}`, (message) => {
-        console.log(">>>>>>>>>>>>>>>>>>Received trade update", message.body);
+        console.log(">>>>>>>>>>>>>>>>>>Received trade update", message);
         //const parsed = JSON.parse(message.body);
         setTradeState(message);
       });

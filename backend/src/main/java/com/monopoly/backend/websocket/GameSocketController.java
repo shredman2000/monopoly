@@ -519,8 +519,16 @@ public class GameSocketController {
             tradeState.removeTileOffered2(tile);
         }
 
-        tradeStateRepository.save(tradeState);
-        messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+        tradeState = tradeStateRepository.save(tradeState);
+        game.setTradeState(tradeState);
+        gameRepository.save(game);
+        try {
+            String json = new ObjectMapper().writeValueAsString(tradeState);
+            messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, json);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        //messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
     }
 
     @MessageMapping("/setMoney")
