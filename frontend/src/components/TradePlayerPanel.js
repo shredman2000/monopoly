@@ -1,10 +1,14 @@
-import React from "react";
+import React, {useState} from "react";
 import './TradePanel.css';
 import '../scene.css'
 
 export default function TradePlayerPanel({ gameState, currentUsername, otherPlayer: name, onAddTileToTrade, onRemoveTileFromTrade, onChangeMoney, tradeState}) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
+    const [tempSliderValue, setTempSliderValue] = useState(0);
+    const [sliderValues, setSliderValues] = useState({});
+
+
 
     const tradingLayout = {
         display: 'grid',
@@ -12,6 +16,14 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
         gridTemplateRows: '10% 10% 10% 1fr 1fr 5%',
         width: '100%',
         height: '100%', 
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func(...args), wait);
+        };
     }
     const ownableTiles = [
         { tileName: 'Mediterranean Avenue', color: 'brown', col: 2, row: 2},
@@ -43,6 +55,8 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
         { tileName: 'Electric Company', color: 'grey', col: 10, row: 8},
         { tileName: 'Water Works', color: 'grey', col: 11, row: 8},
     ]
+    const debouncedOnChangeMoney = debounce(onChangeMoney, 50); // can increase '50' to change number of requests
+
 
     return (
         <div className='trading-overlay'>
@@ -106,14 +120,19 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                                 min="0"
                                 defaultValue={0}
                                 max={playerBalance}
-                                value={name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
+                                value={sliderValues[name] ?? 0}
                                 onChange={(e) => {
-                                onChangeMoney(name, parseInt(e.target.value, 10));
+                                    const newVal = parseInt(e.target.value, 10);
+                                    setSliderValues(prev => ({ ...prev, [name]: newVal }));
+                                }}
+                                onMouseUp={() => { 
+                                    const val = sliderValues[name] ?? 0;
+                                    onChangeMoney(name, val);
                                 }}
                                 style={{ width: '80%' }}
                             />
                             <label>
-                                Offering ${name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
+                                ${name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
                             </label>
                         </div>
 
@@ -190,12 +209,15 @@ export default function TradePlayerPanel({ gameState, currentUsername, otherPlay
                             }}
                             >
                             <h4>Offering:</h4>
+                            <p>${name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}</p>
                             {
                                 tradeState &&
                                 Array.isArray(name === tradeState.player1 ? tradeState.tilesOffered1 : tradeState.tilesOffered2) &&
+
                                 (name === tradeState.player1 ? tradeState.tilesOffered1 : tradeState.tilesOffered2).map(tile => (
-                                    <div key={tile.tileName} style={{ /* styling */ }}>
-                                    {tile.tileName}
+                                    <div key={tile.tileName} style={{ /* styling for showing tiles */ }}>
+                                        
+                                        {tile.tileName}
                                     </div>
                                 ))
                             }
