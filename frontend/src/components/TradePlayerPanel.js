@@ -9,14 +9,20 @@ export default function TradePlayerPanel({
     onAddTileToTrade, 
     onRemoveTileFromTrade, 
     onSendTrade, 
-    onChangeMoney, 
-    tradeState
+    onChangeMoney,  
+    tradeState,
+    onAcceptTrade,
+    onRejectTrade,
+    onEditTrade,
 }) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
     const [tempSliderValue, setTempSliderValue] = useState(0);
     const [sliderValues, setSliderValues] = useState({});
     const isMyTurnToEdit = currentUsername === tradeState?.currentOfferingPlayer;
+    const canAcceptOrReject = currentUsername === tradeState?.player1 || tradeState?.player2;
+    const canEditTrade = canAcceptOrReject && currentUsername !== tradeState?.currentOfferingPlayer;
+
 
 
 
@@ -84,129 +90,137 @@ export default function TradePlayerPanel({
                         textAlign: 'center',
                     }}
                 >
-                <h1>{currentUsername} offering trade to {name}</h1>
+                    { !tradeState.tradeSent && 
+                        <h1>{currentUsername} offering trade to {name}</h1>
+                    }
+                    { tradeState.tradeSent &&
+                        <h1>Review Trade...</h1>
+                    }
                 </div>
                 {gameState.playerUsernames.map((name, index) => {
                     const ownedTiles = tileStates.filter(t => t.ownerUsername === name);
                     const player = gameState.playerStates.find(p => p.username === name);
                     const playerBalance = player?.money;
+
                     console.log('name:', name, '| currentUsername:', currentUsername);
+                    console.log('can accept, reject, or edit');
                     return (
                         <React.Fragment key={name}>
                         
 
 
-                        {/* Row 2: player name */}
-                        <div
-                            style={{
+                            {/* Row 2: player name */}
+                            <div
+                                style={{
+                                    gridColumn: `${index + 1} / ${index + 2}`,
+                                    gridRow: '2 / 3',
+                                    border: '1px solid black',
+                                    padding: '1rem',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                }}
+                            >
+                                <h3 style={{ marginBottom: 0 }}>{name}'s collection</h3>
+                                <p style={{ marginTop: 0 }}>Balance: {playerBalance}</p>
+                            </div>
+                            {/* Row 3: money slider */}
+                            <div style={{
                                 gridColumn: `${index + 1} / ${index + 2}`,
-                                gridRow: '2 / 3',
-                                border: '1px solid black',
-                                padding: '1rem',
+                                gridRow: '3 / 4',
+                                padding: '0.5rem',
                                 display: 'flex',
-                                justifyContent: 'center',
                                 flexDirection: 'column',
                                 alignItems: 'center',
-                                textAlign: 'center',
-                            }}
-                        >
-                            <h3>{name}'s collection</h3>
-                            <p>Balance: {playerBalance}</p>
-                        </div>
-                        {/* Row 3: money slider */}
-                        <div style={{
-                            gridColumn: `${index + 1} / ${index + 2}`,
-                            gridRow: '3 / 4',
-                            padding: '0.5rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            }}>
-                            
-                            <input
-                                type="range"
-                                min="0"
-                                defaultValue={0}
-                                max={playerBalance}
-                                disabled={tradeState?.tradeSent || !isMyTurnToEdit}
-                                value={sliderValues[name] ?? 0}
-                                onChange={(e) => {
-                                    const newVal = parseInt(e.target.value, 10);
-                                    setSliderValues(prev => ({ ...prev, [name]: newVal }));
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                }}>
+                                
+                                <input
+                                    type="range"
+                                    min="0"
+                                    defaultValue={0}
+                                    max={playerBalance}
+                                    disabled={tradeState?.tradeSent || !isMyTurnToEdit}
+                                    value={sliderValues[name] ?? 0}
+                                    onChange={(e) => {
+                                        const newVal = parseInt(e.target.value, 10);
+                                        setSliderValues(prev => ({ ...prev, [name]: newVal }));
+                                    }}
+                                    onMouseUp={() => { 
+                                        const val = sliderValues[name] ?? 0;
+                                        onChangeMoney(name, val);
+                                    }}
+                                    style={{ width: '80%' }}
+                                />
+                                <label>
+                                    ${name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
+                                </label>
+                            </div>
+
+                            {/* Row 4: owned ttiles */}
+                            <div
+                                style={{
+                                    gridColumn: `${index + 1} / ${index + 2}`,
+                                    gridRow: '4 / 5',
+                                    padding: '1rem',
+                                    overflow: 'auto',
+                                    border: '1px solid #aaa',
+                                    display: 'grid',
+                                    gridTemplateColumns: '5% 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 5%',
+                                    gridTemplateRows: '5% 1fr 1fr 1fr 1fr 1fr 1fr 1fr 5%',
+                                    gap: '0.3rem',
+                                    maxHeight: '100%',
+
                                 }}
-                                onMouseUp={() => { 
-                                    const val = sliderValues[name] ?? 0;
-                                    onChangeMoney(name, val);
-                                }}
-                                style={{ width: '80%' }}
-                            />
-                            <label>
-                                ${name === tradeState?.player1 ? tradeState.moneyOffered1 : tradeState?.moneyOffered2}
-                            </label>
-                        </div>
-
-                        {/* Row 4: owned ttiles */}
-                        <div
-                            style={{
-                                gridColumn: `${index + 1} / ${index + 2}`,
-                                gridRow: '4 / 5',
-                                padding: '1rem',
-                                overflow: 'auto',
-                                border: '1px solid #aaa',
-                                display: 'grid',
-                                gridTemplateColumns: '5% 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 5%',
-                                gridTemplateRows: '5% 1fr 1fr 1fr 1fr 1fr 1fr 1fr 5%',
-                                gap: '0.3rem',
-                                height: '100%',
-                            }}
-                        >
-                            {ownableTiles.map(tile => {
-                                const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
-                                const isInTrade = (tradeState?.tilesOffered1 || []).some(t => t.tileName === tile.tileName)
-                                                || (tradeState?.tilesOffered2 || []).some(t => t.tileName === tile.tileName);
-                                return (
-                                    <div
-                                        key={tile.tileName}
-                                        style={{
-                                            gridColumn: tile.col,
-                                            gridRow: tile.row,
-                                            backgroundColor: ownsTile ? 'white' : '#404040',
-                                            border: `2px solid ${isInTrade ? 'green' : '#999'}`,
-                                            borderRadius: '4px',
-                                            position: 'relative',
-                                            opacity: ownsTile ? 1 : 0.3,
-                                            cursor: ownsTile && isMyTurnToEdit && !tradeState?.tradeSent ? 'pointer' : 'not-allowed'
+                            >
+                                {ownableTiles.map(tile => {
+                                    const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
+                                    const isInTrade = (tradeState?.tilesOffered1 || []).some(t => t.tileName === tile.tileName)
+                                                    || (tradeState?.tilesOffered2 || []).some(t => t.tileName === tile.tileName);
+                                    return (
+                                        <div
+                                            key={tile.tileName}
+                                            style={{
+                                                gridColumn: tile.col,
+                                                gridRow: tile.row,
+                                                backgroundColor: ownsTile ? 'white' : '#404040',
+                                                border: `2px solid ${isInTrade ? 'green' : '#999'}`,
+                                                borderRadius: '4px',
+                                                position: 'relative',
+                                                opacity: ownsTile ? 1 : 0.3,
+                                                cursor: ownsTile && isMyTurnToEdit && !tradeState?.tradeSent ? 'pointer' : 'not-allowed'
 
 
-                                        }}
-            
-                                        onClick={() => {
-                                            const matched = ownedTiles.find(t => t.tileName === tile.tileName);
-                                            const tileOwner = matched?.ownerUsername;
+                                            }}
+                
+                                            onClick={() => {
+                                                const matched = ownedTiles.find(t => t.tileName === tile.tileName);
+                                                const tileOwner = matched?.ownerUsername;
 
-                                            if (tileOwner && !isInTrade) {
-                                                onAddTileToTrade(tile.tileName, tileOwner);
-                                            }
-                                            else if (tileOwner && isInTrade) {
-                                                onRemoveTileFromTrade(tile.tileName, tileOwner);
-                                            }
-                                        }}
-                                    >
-                                    {/* color bar */}
-                                    <div
-                                        style={{
-                                        backgroundColor: tile.color,
-                                        height: '10%',
-                                        width: '100%',
-                                        borderTopLeftRadius: '4px',
-                                        borderTopRightRadius: '4px',
-                                        }}
-                                    />
-                                    </div>
-                                );
-                            })}
+                                                if (tileOwner && !isInTrade) {
+                                                    onAddTileToTrade(tile.tileName, tileOwner);
+                                                }
+                                                else if (tileOwner && isInTrade) {
+                                                    onRemoveTileFromTrade(tile.tileName, tileOwner);
+                                                }
+                                            }}
+                                        >
+                                        {/* color bar */}
+                                        <div
+                                            style={{
+                                            backgroundColor: tile.color,
+                                            height: '10%',
+                                            width: '100%',
+                                            borderTopLeftRadius: '4px',
+                                            borderTopRightRadius: '4px',
+                                            }}
+                                        />
+                                        </div>
+                                    );
+                                })}
                         </div>
 
                         <div
@@ -260,15 +274,76 @@ export default function TradePlayerPanel({
                             </div>
                         }
 
-                        {/* buttons to accept, reject, or edit trade */}
-
-
-
+                        
 
                         </React.Fragment>
                         
                     );
                 })}
+                {/* buttons to accept, reject, or edit trade */}
+                    {tradeState.tradeSent && canAcceptOrReject &&
+                        <div style={{
+                            gridColumn: `1/3`,
+                            gridRow: '6/7',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            flexDirection: 'row',
+                            
+
+                        }}>
+                            <div id="accept-button"
+                                style={{
+                                    gridColumn: `1/3`,
+                                    gridRow: '6/7',
+                                    justifyContent: 'center',
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    fontSize: '15',
+                                }}
+                            >
+                                <button onClick={() => {
+                                    onAcceptTrade(currentUsername);
+                                }}>Accept Trade</button>
+                            </div>
+                            <div id="reject-button"
+                                style={{
+                                    gridColumn: `1/3`,
+                                    gridRow: '6/7',
+                                    justifyContent: 'center',
+                                    display: 'flex',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    fontSize: '15',
+                                }}
+                            >
+                                <button onClick={() => {
+                                    onRejectTrade();
+                                }}>Reject Trade</button>
+                            </div>
+                            {canEditTrade &&
+                                <div id="edit-trade-button"
+                                    style={{
+                                        gridColumn: `1/3`,
+                                        gridRow: '6/7',
+                                        justifyContent: 'center',
+                                        display: 'flex',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        textAlign: 'center',
+                                        fontSize: '15',
+                                    }}
+                                >
+                                    <button onClick={() => {
+                                        onEditTrade();
+                                    }}>Counter offer</button>
+
+                                </div>
+                            }
+                        </div>
+                    }
             </div>
         </div>
     );

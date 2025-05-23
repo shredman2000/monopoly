@@ -266,6 +266,15 @@ function Scene() {
             onSendTrade={() => {
               WebSocketService.send('/app/sendTrade', { gameId });
             }}
+            onAcceptTrade={() => {
+              WebSocketService.send('/app/acceptTrade', { gameId, acceptingPlayer: username});
+            }}
+            onRejectTrade={() => {
+              WebSocketService.send('/app/rejectTrade', { gameId, username });
+            }}
+            onEditTrade={() => {
+              WebSocketService.send('/app/editTrade', { gameId, username });
+            }}
           />
 
         </div>

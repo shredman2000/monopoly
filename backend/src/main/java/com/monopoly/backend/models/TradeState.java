@@ -1,20 +1,19 @@
 package com.monopoly.backend.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.monopoly.backend.models.Game;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.GenerationType;
 
 
 @Entity
@@ -184,6 +183,28 @@ public class TradeState {
     public void incrementCount() {
         this.count += 1;
     }
+
+    public Boolean getTradeConfirmed() {
+        if ((this.player1Confirmed == true) && (this.player2Confirmed == true)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    public Boolean getPlayer1Confirmed() {
+        return this.player1Confirmed;
+    }
+    public Boolean getPlayer2Confirmed() {
+        return this.player2Confirmed;
+    }
+    public void setPlayer1Confirmed(Boolean player1Confirmed) {
+        this.player1Confirmed = player1Confirmed;
+    }
+    public void setPlayer2Confirmed(Boolean player2Confirmed) {
+        this.player2Confirmed = player2Confirmed;
+    }
+
 
 
 }

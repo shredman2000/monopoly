@@ -13,18 +13,17 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monopoly.backend.models.AuctionState;
 import com.monopoly.backend.models.Game;
 import com.monopoly.backend.models.PlayerState;
 import com.monopoly.backend.models.TileState;
+import com.monopoly.backend.models.TradeState;
 import com.monopoly.backend.repository.AuctionStateRepository;
 import com.monopoly.backend.repository.GameRepository;
-import com.monopoly.backend.services.GameService;
-import com.monopoly.backend.models.TradeState;
 import com.monopoly.backend.repository.TradeStateRepository;
+import com.monopoly.backend.services.GameService;
 
 @Controller
 public class GameSocketController {
@@ -596,12 +595,20 @@ public class GameSocketController {
 
         tradeState.setTradeSent(false);
         String current = tradeState.getCurrentOfferingPlayer();
-        String newOfferer = editor.equals(tradeState.getPlayer1()) ? tradeState.getPlayer2() : tradeState.getPlayer1();
+        String newOfferer = tradeState.getCurrentOfferingPlayer().equals(tradeState.getPlayer1())
+            ? tradeState.getPlayer2()
+            : tradeState.getPlayer1();
+
         tradeState.setCurrentOfferingPlayer(newOfferer);
-        tradeState.setTradeSent(false);
+        tradeState.setPlayer1Confirmed(false);
+        tradeState.setPlayer2Confirmed(false);
 
         tradeStateRepository.save(tradeState);
         messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+        game.setTradeState(tradeState);
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+
     }
 
     
@@ -611,8 +618,7 @@ public class GameSocketController {
     @MessageMapping("/acceptTrade")
     public void acceptTrade(Map<String, String> msg) {
         String gameId = msg.get("gameId");
-        String player1 = msg.get("username");
-        String player2 = msg.get("name");
+        String acceptingPlayer = msg.get("acceptingPlayer");
 
         Game game = gameRepository.findById(gameId).orElse(null);
         if (game == null) {return;}
@@ -620,50 +626,82 @@ public class GameSocketController {
         TradeState tradeState = game.getTradeState();
         if (tradeState == null) { return; }
 
-        PlayerState p1 = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(tradeState.getPlayer1())).findFirst().orElse(null);
-        PlayerState p2 = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(tradeState.getPlayer2())).findFirst().orElse(null);
-
-        //transfer money
-        p1.setMoney(p1.getMoney() + tradeState.getMoneyOffered2() - tradeState.getMoneyOffered1());
-        p2.setMoney(p2.getMoney() + tradeState.getMoneyOffered1() - tradeState.getMoneyOffered2());
-
-        // transfer tiles
-
-        List<TileState> player1GivingTiles = tradeState.getTilesOffered1();
-        List<TileState> player2GivingTiles = tradeState.getTilesOffered2();
-
-        List<TileState> gameTiles = game.getTileStates();
-
-        // send player1s tiles to player2
-        for (TileState tile : player1GivingTiles) {
-            for (TileState gameTile: gameTiles) {
-                if (gameTile.getTileName().equals(tile.getTileName())) {
-                    gameTile.setOwnerUsername(player2);
-                    break;
-                }
-            }
+        if (tradeState.getPlayer1().equals(acceptingPlayer)) {
+            tradeState.setPlayer1Confirmed(true);
+        }
+        if (tradeState.getPlayer2().equals(acceptingPlayer)) {
+            tradeState.setPlayer2Confirmed(true);
         }
 
-        // send player2s tiles to player1
-        for (TileState tile : player2GivingTiles) {
-            for (TileState gameTile: gameTiles) {
-                if (gameTile.getTileName().equals(tile.getTileName())) {
-                    gameTile.setOwnerUsername(player1);
-                    break;
+
+        if (tradeState.getTradeConfirmed()) {
+
+            PlayerState p1 = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(tradeState.getPlayer1())).findFirst().orElse(null);
+            PlayerState p2 = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(tradeState.getPlayer2())).findFirst().orElse(null);
+
+            //transfer money
+            p1.setMoney(p1.getMoney() + tradeState.getMoneyOffered2() - tradeState.getMoneyOffered1());
+            p2.setMoney(p2.getMoney() + tradeState.getMoneyOffered1() - tradeState.getMoneyOffered2());
+
+            // transfer tiles
+
+            List<TileState> player1GivingTiles = tradeState.getTilesOffered1();
+            List<TileState> player2GivingTiles = tradeState.getTilesOffered2();
+
+            List<TileState> gameTiles = game.getTileStates();
+
+            // send player1s tiles to player2
+            for (TileState tile : player1GivingTiles) {
+                for (TileState gameTile: gameTiles) {
+                    if (gameTile.getTileName().equals(tile.getTileName())) {
+                        gameTile.setOwnerUsername(tradeState.getPlayer2());
+                        break;
+                    }
                 }
             }
+
+            // send player2s tiles to player1
+            for (TileState tile : player2GivingTiles) {
+                for (TileState gameTile: gameTiles) {
+                    if (gameTile.getTileName().equals(tile.getTileName())) {
+                        gameTile.setOwnerUsername(tradeState.getPlayer1());
+                        break;
+                    }
+                }
+            }
+
+            // wipe trade?
+
+            tradeStateRepository.save(tradeState);
+            messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+            game.setTradeState(null);
         }
+        else {
+            tradeStateRepository.save(tradeState);
+            messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+            game.setTradeState(tradeState);
+        }
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
 
-        // wipe trade?
+    }
 
-        tradeStateRepository.save(tradeState);
-        messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
+    @MessageMapping("/rejectTrade")
+    public void rejectTrade(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) {return;}
+
+        TradeState tradeState = game.getTradeState();
+        if (tradeState == null) { return; }
+
+        //tradeStateRepository.save(tradeState);
+        //messagingTemplate.convertAndSend("/topic/tradeUpdates/" + gameId, tradeState);
         game.setTradeState(null);
         gameRepository.save(game);
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
     }
-
-    // TODO: @MessageMapping("/rejectTrade")
 
     //TODO: @MessageMapping("/cancelTrade")
 
