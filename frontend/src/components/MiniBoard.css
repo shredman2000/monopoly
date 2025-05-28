@@ -26,11 +26,11 @@
 
 /* color for ownership */
 .tile.owned {
-  background-color: #2ecc71;
+  /* background-color: #2ecc71; */
   color: white;
 }
 .tile.owned-other {
-  background-color: #e74c3c;
+  /* background-color: #e74c3c; */
   color: white;
 }
 .tile.unowned {
@@ -91,3 +91,25 @@
 .color-green { border-top: 4px solid green }
 .color-blue { border-top: 4px solid blue }
 .color-black { border-top: 4px solid black }
+
+.owner-color-red     { background-color: red; }
+.owner-color-red-mortgaged { background-color: red; opacity: .7; }
+
+.owner-color-blue    { background-color: blue; }
+.owner-color-blue-mortgaged { background-color: blue; opacity: .7; }
+
+.owner-color-green   { background-color: green; }
+.owner-color-green-mortgaged { background-color: green; opacity: .7; }
+
+.owner-color-yellow  { background-color: yellow; }
+.owner-color-yellow-mortgaged { background-color: yellow; opacity: .7; }
+
+.owner-color-purple  { background-color: purple; }
+.owner-color-purple-mortgaged { background-color: purple; opacity: .7; }
+
+.owner-color-orange  { background-color: orange; }
+.owner-color-orange-mortgaged { background-color: orange; opacity: .7; }
+
+.owner-color-pink    { background-color: pink; }
+.owner-color-pink-mortgaged { background-color: pink; opacity: .4; }
+

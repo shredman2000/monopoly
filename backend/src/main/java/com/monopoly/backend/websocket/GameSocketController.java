@@ -706,6 +706,57 @@ public class GameSocketController {
     //TODO: @MessageMapping("/cancelTrade")
 
 
+    @MessageMapping("/mortgageTile") 
+    public void mortgageTile(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+        String username = msg.get("username");
+        String tilename = msg.get("tilename");
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) {return;}
+
+        TileState tileToMortgage = game.getTileStates().stream().filter(t -> tilename.equals(t.getTileName())).findAny().orElse(null);
+        if (tileToMortgage == null) { return; }
+
+        tileToMortgage.setMortgaged(true);
+        int mortgageValue = tileToMortgage.getCostToMortgage();
+
+        PlayerState player = game.getPlayerStates().stream().filter(p -> username.equals(p.getUsername())).findAny().orElse(null);
+        if (player == null) { return; }
+
+        player.setMoney(player.getMoney() + mortgageValue);
+
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);    
+    }
+
+    @MessageMapping("/buyBackMortagedTile")
+    public void buyBackMortgaged(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+        String username = msg.get("username");
+        String tilename = msg.get("tilename");
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) { return; }
+
+        TileState tileToBuy = game.getTileStates().stream().filter(t -> tilename.equals(t.getTileName())).findAny().orElse(null);
+        if (tileToBuy == null) { return; }
+
+        PlayerState player = game.getPlayerStates().stream().filter(p -> username.equals(p.getUsername())).findAny().orElse(null);
+        if (player == null) { return; }
+
+        // too broke
+        if (tileToBuy.getCostToMortgage() > player.getMoney()) { return; }
+
+        tileToBuy.setMortgaged(false);
+
+        player.setMoney(player.getMoney() - tileToBuy.getCostToMortgage());
+        
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);    
+    }
+
+
 
     ///////////////////////DTOS
     public static class PlayerMoveMessage {

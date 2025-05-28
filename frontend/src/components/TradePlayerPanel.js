@@ -22,7 +22,8 @@ export default function TradePlayerPanel({
     const isMyTurnToEdit = currentUsername === tradeState?.currentOfferingPlayer;
     const canAcceptOrReject = currentUsername === tradeState?.player1 || tradeState?.player2;
     const canEditTrade = canAcceptOrReject && currentUsername !== tradeState?.currentOfferingPlayer;
-
+    const player1Accepted = tradeState.player1Confirmed;
+    const player2Accepted = tradeState.player2Confirmed;
 
 
 
@@ -180,19 +181,19 @@ export default function TradePlayerPanel({
                                     const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
                                     const isInTrade = (tradeState?.tilesOffered1 || []).some(t => t.tileName === tile.tileName)
                                                     || (tradeState?.tilesOffered2 || []).some(t => t.tileName === tile.tileName);
+                                    const isMortgaged = tile.mortgaged;
                                     return (
                                         <div
                                             key={tile.tileName}
                                             style={{
                                                 gridColumn: tile.col,
                                                 gridRow: tile.row,
-                                                backgroundColor: ownsTile ? 'white' : '#404040',
+                                                backgroundColor: ownsTile ? (!isMortgaged ? 'white' : "#4a4a4a") : '#404040',
                                                 border: `2px solid ${isInTrade ? 'green' : '#999'}`,
                                                 borderRadius: '4px',
                                                 position: 'relative',
                                                 opacity: ownsTile ? 1 : 0.3,
                                                 cursor: ownsTile && isMyTurnToEdit && !tradeState?.tradeSent ? 'pointer' : 'not-allowed'
-
 
                                             }}
                 
@@ -344,6 +345,27 @@ export default function TradePlayerPanel({
                             }
                         </div>
                     }
+                
+                    <div id="player1confirmedoutline"
+                        style={{
+                            gridColumn: '1/2',
+                            gridRow: '2/6',
+                            background: '',
+                            outlineColor: '',
+                            border: `2px solid ${player1Accepted ? 'green' : 'black'}`
+                        }}
+                    >   
+                    </div>
+                    <div id="player2confirmedoutline"
+                        style={{
+                            gridColumn: '2/3',
+                            gridRow: '2/6',
+                            background: '',
+                            outlineColor: '',
+                            border: `2px solid ${player2Accepted ? 'green' : 'black'}`
+                        }}
+                    >   
+                    </div>
             </div>
         </div>
     );

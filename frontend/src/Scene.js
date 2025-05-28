@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import BuyPropertyPrompt from './components/BuyPropertyPrompt';
@@ -98,6 +98,14 @@ function Scene() {
     }
   };
 
+  useEffect(() => {
+    if (!selectedTile || !gameState?.tileStates) { return };
+    const updated = gameState.tileStates.find(t => t.tileName === selectedTile.tileName);
+    if (updated && updated !== selectedTile) {
+      setSelectedTile(updated);
+    }
+  }, [gameState, selectedTile]);
+
   return (
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
@@ -194,6 +202,7 @@ function Scene() {
             tileStates={gameState.tileStates}
             currentUsername={username}
             onTileClick={(tile) => setSelectedTile(tile)}
+            playerStates={gameState.playerStates}
           />
         </div>
       </div>
@@ -203,7 +212,7 @@ function Scene() {
 
       {selectedTile && (
         <TileDetailsPanel
-          tile={selectedTile}
+          tile={gameState?.tileStates.find(t => t.tileName === selectedTile?.tileName)}
           username={username}
           onClose={() => setSelectedTile(null)}
           onHouseBuild={(tile) => {
@@ -213,6 +222,20 @@ function Scene() {
               tileName: tile.tileName,
             });
             setSelectedTile(null);
+          }}
+          onMortgageTile={(tile) => {
+            WebSocketService.send('/app/mortgageTile', {
+              gameId,
+              username,
+              tilename: tile.tileName,
+            });
+          }}
+          onBuyBackMortgage={(tile) => {
+            WebSocketService.send('/app/buyBackMortagedTile', {
+              gameId,
+              username,
+              tilename: tile.tileName,
+            });
           }}
         />
       )}
