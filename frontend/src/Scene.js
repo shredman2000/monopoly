@@ -11,6 +11,7 @@ import PassedGo from './components/PassedGo';
 import WebSocketService from './WebSocketService';
 import PostMovePanel from './components/PostMovePanel';
 import TradePlayerPanel from './components/TradePlayerPanel';
+import CommunityChestCard from './components/CommunityChestCard'
 
 
 import useBoardScene from './hooks/useBoardScene';
@@ -31,7 +32,8 @@ function Scene() {
   const [trading, setTrading] = useState(null);
   const [tradingPlayer, setTradingPlayer] = useState(null);
   const [tradeState, setTradeState] = useState(null);
-
+  const [chanceResponse, setChanceResponse] = useState(null);
+  const [communityChestResponse, setCommunityChestResponse] = useState(null);
 
   const {
     turnIndex,
@@ -62,6 +64,7 @@ function Scene() {
     setInPostMoveState,
     gameState,
     setGameState,
+
   } = usePlayerState(username);
 
   // create board camera and scene stuff
@@ -89,6 +92,9 @@ function Scene() {
     boardRef,
     setGameState,
     setTradeState,
+    setCommunityChestResponse,
+    setChanceResponse,
+    turnIndex
   });
 
   const handleRollDice = () => {
@@ -110,7 +116,15 @@ function Scene() {
     <>
       <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
 
-      {canRoll && !currentTileOptions && !inPostMoveState &&(
+      {communityChestResponse && (
+          <CommunityChestCard
+            info={communityChestResponse}
+            onFinish={() => setCommunityChestResponse(null)}
+          />
+      )}
+
+
+      {canRoll && !currentTileOptions && !inPostMoveState && !communityChestResponse && (
         <button
           onClick={handleRollDice}
           style={{
@@ -264,6 +278,9 @@ function Scene() {
               WebSocketService.send('/app/startTrade', { gameId, username, name })
               setTrading(false);
               setTradingPlayer(name);
+            }}
+            onClose={() => {
+              setTrading(false);
             }}
           />
         </div>

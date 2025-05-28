@@ -2,7 +2,7 @@ import React from "react";
 import './TradePanel.css';
 import '../scene.css'
 
-export default function TradePanel({ gameState, currentUsername, onTradingWithPlayer }) {
+export default function TradePanel({ gameState, currentUsername, onTradingWithPlayer, onClose }) {
     const playerCount = gameState?.playerUsernames?.length  || 1;
     const tileStates = gameState.tileStates;
 
@@ -45,7 +45,7 @@ export default function TradePanel({ gameState, currentUsername, onTradingWithPl
     ]
 
     return (
-        <div className='trading-overlay'>
+        <div className='trading-overlay' style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={tradingLayout}>
                 {gameState.playerUsernames.map((name, index) => {
                     const ownedTiles = tileStates.filter(t => t.ownerUsername === name);
@@ -66,10 +66,12 @@ export default function TradePanel({ gameState, currentUsername, onTradingWithPl
                                 flexDirection: 'column',
                                 alignItems: 'center',
                                 textAlign: 'center',
+                                borderColor: `${currentUsername === name ? 'green' : 'none'}`,
+                                boxShadow: `${currentUsername === name ? 'inset 0 0 20px rgba(0, 255, 0, 0.5)' : 'none'}`
                             }}
                         >
-                            <h3>{name}'s collection</h3>
-                            <p>Balance: {playerBalance}</p>
+                            <h3 style={{ marginBottom: 0, marginTop: '5px' }}>{name}'s collection</h3>
+                            <p style={{ marginTop: 0 }}>Balance: {playerBalance}</p>
                         </div>
 
                         {/* Row 2: owned ttiles */}
@@ -137,6 +139,18 @@ export default function TradePanel({ gameState, currentUsername, onTradingWithPl
                     );
                 })}
             </div>
+            { /* might need to use this later if wanting to show this screen to all players */ }
+            <div id="close-trade-panel-button"
+                style={{
+                    alignItems:'right',
+                    alignContent: 'right',
+                }}>
+                <button
+                    onClick={() => onClose()} 
+                >Close</button>
+                
+            </div>
+           
         </div>
     );
 

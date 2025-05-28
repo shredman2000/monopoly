@@ -16,6 +16,7 @@ export default function useGameSocket({
   setPaymentInfo,
   setPassedGo,
   setUser,
+  turnIndex,
   setAuctionData,
   playerMapRef,
   sceneRef,
@@ -25,6 +26,8 @@ export default function useGameSocket({
   setGameState,
   setInPostMoveState,
   setTradeState,
+  setChanceResponse,
+  setCommunityChestResponse,
 }) {
   useEffect(() => {
     if (!gameId || !username) return;
@@ -79,6 +82,10 @@ export default function useGameSocket({
       });
 
       WebSocketService.subscribe(`/topic/rolled/${gameId}`, ({ username: rolledUser, roll, newPosition }) => {
+
+        const isMe = rolledUser === username;
+        if (!isMe) return;
+
         const piece = playerMapRef.current[rolledUser];
         const index = playerUsernames.indexOf(rolledUser);
         const tilePos = boardRef.current.tilePositions[newPosition];
@@ -134,6 +141,34 @@ export default function useGameSocket({
         if (data.action === 'free_parking') {
           setPaymentInfo({ user: username, type: data.type, amount: data.amount });
         }
+
+        if (data.action === 'community_chest') {
+          // should already recieve the drawn card here from backend and animate it
+          // then send to /confirmCommunityChest or something to actually update
+
+          // Todo: animate card
+          if (data.type === 'recievemoney') {
+            setCommunityChestResponse({
+              text: data.correspondingtext,
+              money: data.money
+            })
+            // animate and set timeout
+            const isMyTurn = playerUsernames[turnIndex] === username;
+
+
+              setTimeout(() => {
+                WebSocketService.send('/app/confirmCommunityChest', {
+                  gameId,
+                  username,
+                  action: "recievemoney",
+                  money: data.money,
+                })
+              }, 1000);
+            
+            // send back here or elsewhere? 
+          }
+
+        }
       });
 
       WebSocketService.subscribe(`/topic/auctionUpdates/${gameId}`, (data) => {
@@ -155,7 +190,6 @@ export default function useGameSocket({
 
       WebSocketService.send('/app/getGameState', { gameId });
     });
-
     return () => {
       WebSocketService.disconnect();
     };

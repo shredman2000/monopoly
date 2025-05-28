@@ -757,6 +757,35 @@ public class GameSocketController {
     }
 
 
+    @MessageMapping("/confirmCommunityChest")
+    public void confirmCommunityChest(Map<String, String> msg) {
+        String gameId = msg.get("gameId");
+        String username = msg.get("username");
+        String action = msg.get("action");
+        System.out.println("Received confirmCommunityChest from: " + username);
+
+        
+
+        Game game = gameRepository.findById(gameId).orElse(null);
+        if (game == null) { return; }
+        PlayerState player = game.getPlayerStates().stream().filter(p -> username.equals(p.getUsername())).findAny().orElse(null);
+        if (player == null) { return; }
+        String currentTurnPlayer = game.getPlayerUsernames().get(game.getTurnIndex());
+        if (!username.equals(currentTurnPlayer)) { return; }
+
+        if (action.equals("recievemoney")) {
+            int money = Integer.parseInt(msg.get("money"));
+            player.setMoney(player.getMoney() + money);
+        }
+
+        System.out.println(">>>>> Backend: calling postMoveState for " + username);
+
+        gameService.postMoveState(game, username);
+        gameRepository.save(game);
+        messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
+        
+    }
+
 
     ///////////////////////DTOS
     public static class PlayerMoveMessage {

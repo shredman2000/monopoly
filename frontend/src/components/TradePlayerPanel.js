@@ -35,13 +35,6 @@ export default function TradePlayerPanel({
         height: '100%', 
     }
 
-    function debounce(func, wait) {
-        let timeout;
-        return function (...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func(...args), wait);
-        };
-    }
     const ownableTiles = [
         { tileName: 'Mediterranean Avenue', color: 'brown', col: 2, row: 2},
         { tileName: 'Baltic Avenue', color: 'brown', col: 3, row: 2},
@@ -72,7 +65,6 @@ export default function TradePlayerPanel({
         { tileName: 'Electric Company', color: 'grey', col: 10, row: 8},
         { tileName: 'Water Works', color: 'grey', col: 11, row: 8},
     ]
-    const debouncedOnChangeMoney = debounce(onChangeMoney, 50); // can increase '50' to change number of requests
 
 
     return (
@@ -122,6 +114,8 @@ export default function TradePlayerPanel({
                                     flexDirection: 'column',
                                     alignItems: 'center',
                                     textAlign: 'center',
+                                    borderColor: `${currentUsername === name ? 'green' : 'none'}`,
+                                    boxShadow: `${currentUsername === name ? 'inset 0 0 20px rgba(0, 255, 0, 0.5)' : 'none'}`
                                 }}
                             >
                                 <h3 style={{ marginBottom: 0 }}>{name}'s collection</h3>
@@ -137,6 +131,8 @@ export default function TradePlayerPanel({
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '0.5rem',
+                                zIndex: 10,
+                                position: 'relative' 
                                 }}>
                                 
                                 <input
@@ -179,16 +175,17 @@ export default function TradePlayerPanel({
                             >
                                 {ownableTiles.map(tile => {
                                     const ownsTile = ownedTiles.some(t => t.tileName === tile.tileName);
+                                    const tileState = tileStates.find(t => t.tileName === tile.tileName);
                                     const isInTrade = (tradeState?.tilesOffered1 || []).some(t => t.tileName === tile.tileName)
                                                     || (tradeState?.tilesOffered2 || []).some(t => t.tileName === tile.tileName);
-                                    const isMortgaged = tile.mortgaged;
+                                    const isMortgaged = tileState?.mortgaged ?? false;
                                     return (
                                         <div
                                             key={tile.tileName}
                                             style={{
                                                 gridColumn: tile.col,
                                                 gridRow: tile.row,
-                                                backgroundColor: ownsTile ? (!isMortgaged ? 'white' : "#4a4a4a") : '#404040',
+                                                backgroundColor: ownsTile ? (!isMortgaged ? 'white' : "#a8a8a8") : '#404040',
                                                 border: `2px solid ${isInTrade ? 'green' : '#999'}`,
                                                 borderRadius: '4px',
                                                 position: 'relative',

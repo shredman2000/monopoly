@@ -1,5 +1,6 @@
 package com.monopoly.backend.services;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -307,9 +308,7 @@ public class GameService {
                 }
                 break;
             case "community_chest":
-                // draw card
-                postMoveState(game, username);
-                //finalizeTurn(game, username);
+                response = drawCommunityChestCard(game);
                 break;
             case "chance":
                 // draw card
@@ -422,6 +421,56 @@ public class GameService {
         
         System.out.println("Sending tile action: " + response);
         messagingTemplate.convertAndSend("/topic/tileAction/" + game.getGameId(), response);
+    }
+
+    public Map<String, Object> drawCommunityChestCard(Game game) {
+        int numcards = 1;
+        int chosenCard = (int)(Math.random() * numcards); 
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("action", "community_chest");
+
+        switch (chosenCard){
+            case 0: // recieve money 
+
+                int[] options = new int[] {200, 100, 50, 25, 10, 20};
+                List<String> text = new ArrayList<>();
+                text.add("You inherit money from a relative.");
+                text.add("You win second prize in a beauty contest.");
+                text.add("You find money on the street.");
+                text.add("You receive a tax refund.");
+                text.add("You sell an old item online.");
+                text.add("Bank error in your favor.");
+
+                int rand = (int)(Math.random() * options.length);
+
+                int moneyRecieved = options[rand];
+                String correspondingText = text.get(rand);
+
+                System.out.println(">>>>>>>>>>>>>> reached community chest recieve money text: " + correspondingText + "and  money recieved " + moneyRecieved );
+                response.put("type", "recievemoney");
+                response.put("money", moneyRecieved);
+                response.put("correspondingtext", correspondingText);
+
+                //messagingTemplate.convertAndSend("/topic/tileAction/" + game.getGameId(), response);
+                return response;
+
+            case 1: // pay money
+
+            case 2: // advance to go
+
+            case 3: // go to jail
+
+            case 4: // collect from every other player
+
+            case 5: // advance to random tile, if unowned buy, else pay
+
+            case 6: //  recieve get out of jail free card. do this later.
+
+
+            
+        }
+        return response;
     }
 
 
