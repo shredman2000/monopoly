@@ -98,6 +98,7 @@ export default function useGameSocket({
           username: rolledUser,
           newPosition: newPosition.toString(),
           roll,
+          type: 'roll',
         });
       });
 
@@ -145,27 +146,77 @@ export default function useGameSocket({
         if (data.action === 'community_chest') {
           // should already recieve the drawn card here from backend and animate it
           // then send to /confirmCommunityChest or something to actually update
-
-          // Todo: animate card
           if (data.type === 'recievemoney') {
             setCommunityChestResponse({
               text: data.correspondingtext,
               money: data.money
             })
-            // animate and set timeout
-            const isMyTurn = playerUsernames[turnIndex] === username;
+            setTimeout(() => {
+              WebSocketService.send('/app/confirmCommunityChest', {
+                gameId,
+                username,
+                action: "recievemoney",
+                money: data.money,
+              })
+            }, 1000);
+          }
+          if (data.type === 'paymoney') {
+            setCommunityChestResponse({
+              text: data.correspondingtext,
+              paymoney: data.money
+            })
+            setTimeout(() => {
+              WebSocketService.send('/app/confirmCommunityChest', {
+                gameId,
+                username,
+                action: "paymoney",
+                money: data.money,
+              })
+            }, 1000);
+          }
+          if (data.type === 'advancetogo') {
+            setCommunityChestResponse({
+              type: 'advancetogo',
+              text: data.text,
+            })
+            setTimeout(() => {
+              WebSocketService.send('/app/confirmCommunityChest', {
+                gameId,
+                username,
+                action: "advancetogo",
+              })
+            }, 1000);
 
+          }
+          if (data.type === 'gotojail') {
+            // TODO: do this
+          }
+          if (data.type === 'collectfromplayers') {
+            setCommunityChestResponse({
+              type: 'collectfromplayers',
+              text: data.text
+            })
+            setTimeout(() => {
+              WebSocketService.send('/app/confirmCommunityChest', {
+                gameId,
+                username,
+                action: "collectfromplayers",
+              })
+            }, 1000);
 
-              setTimeout(() => {
-                WebSocketService.send('/app/confirmCommunityChest', {
-                  gameId,
-                  username,
-                  action: "recievemoney",
-                  money: data.money,
-                })
-              }, 1000);
-            
-            // send back here or elsewhere? 
+          }
+          if (data.type === 'advancerandomtile') {
+            setCommunityChestResponse({
+              type: 'advancerandomtile',
+              text: data.text,
+            })
+            setTimeout(() => {
+              WebSocketService.send('/app/confirmCommunityChest', {
+                gameId,
+                username,
+                action: "advancerandomtile",
+              })
+            }, 1000);
           }
 
         }

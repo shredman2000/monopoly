@@ -28,6 +28,25 @@ export default function CommunityChestCard({ info, onFinish }) {
         ctx.fillText(info.text, textCanvas.width / 2, textCanvas.height / 2);
         ctx.fillText(`$Recieve: ${info.money}`, textCanvas.width / 2, textCanvas.height * 3 / 4);
     }
+    if (info.paymoney) {
+        ctx.fillText(info.text, textCanvas.width / 2, textCanvas.height / 2);
+        ctx.fillText(`$Pay: ${info.paymoney}`, textCanvas.width / 2, textCanvas.height * 3 / 4);
+    }
+    if (info.type === 'advancetogo') {
+        ctx.fillText(info.text, textCanvas.width / 2, textCanvas.height / 2);
+        ctx.fillText(`Collect $200!`, textCanvas.width / 2, textCanvas.height * 3 / 4);
+    }
+    if (info.type === 'gotojail') {
+
+    }
+    if (info.type === 'collectfromplayers') {
+        ctx.fillText(info.text, textCanvas.width / 2, textCanvas.height / 2);
+    }
+    if (info.type === 'advancerandomtile') {
+        ctx.fillText(info.text, textCanvas.width / 2, textCanvas.height / 2);
+        ctx.fillText(`If you pass go, collect $200`, textCanvas.width / 2, textCanvas.height * 3 / 4);
+    }
+
     
     const texture = new THREE.CanvasTexture(textCanvas);
 

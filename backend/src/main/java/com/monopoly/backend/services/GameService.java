@@ -204,7 +204,7 @@ public class GameService {
 
 
         // check if passed go
-        if (prevPos <= 0) {
+        if (prevPos < 0) {
             ps.setMoney(ps.getMoney() + 200);
             response.put("passed_go", username);
             gameRepository.save(game);
@@ -424,17 +424,20 @@ public class GameService {
     }
 
     public Map<String, Object> drawCommunityChestCard(Game game) {
-        int numcards = 1;
-        int chosenCard = (int)(Math.random() * numcards); 
+        int numcards = 5;
+        //int chosenCard = (int)(Math.random() * numcards); 
+
+        int chosenCard = 5; // use for testing
 
         Map<String, Object> response = new HashMap<>();
         response.put("action", "community_chest");
-
+        int[] options = new int[] {200, 100, 50, 25, 10, 20};
+        List<String> text = new ArrayList<>();
+        int rand;
+        String correspondingText;
         switch (chosenCard){
             case 0: // recieve money 
-
-                int[] options = new int[] {200, 100, 50, 25, 10, 20};
-                List<String> text = new ArrayList<>();
+                
                 text.add("You inherit money from a relative.");
                 text.add("You win second prize in a beauty contest.");
                 text.add("You find money on the street.");
@@ -442,29 +445,58 @@ public class GameService {
                 text.add("You sell an old item online.");
                 text.add("Bank error in your favor.");
 
-                int rand = (int)(Math.random() * options.length);
+                rand = (int)(Math.random() * options.length);
 
                 int moneyRecieved = options[rand];
-                String correspondingText = text.get(rand);
+                correspondingText = text.get(rand);
 
                 System.out.println(">>>>>>>>>>>>>> reached community chest recieve money text: " + correspondingText + "and  money recieved " + moneyRecieved );
-                response.put("type", "recievemoney");
+                response.put("type", "paymoney");
                 response.put("money", moneyRecieved);
                 response.put("correspondingtext", correspondingText);
 
-                //messagingTemplate.convertAndSend("/topic/tileAction/" + game.getGameId(), response);
                 return response;
 
             case 1: // pay money
+                text.add("You pay hospital fees.");
+                text.add("You buy a birthday gift for a friend.");
+                text.add("You are fined for littering.");
+                text.add("You donate to a local charity.");
+                text.add("You pay school tuition.");
+                text.add("You lose a bet at the horse track.");
+
+                rand = (int)(Math.random() * options.length);
+
+                int moneyPaid = options[rand];
+                correspondingText = text.get(rand);
+
+                System.out.println(">>>>>>>>>>>>>> reached community chest pay money text: " + correspondingText + "and  money recieved " + moneyPaid );
+                response.put("type", "paymoney");
+                response.put("money", moneyPaid);
+                response.put("correspondingtext", correspondingText);
+
+                return response;
 
             case 2: // advance to go
+                text.add("You catch a slipstream and advance to Go!");
+                response.put("type", "advancetogo");
+                response.put("text", text.get(0));
 
+                return response;
             case 3: // go to jail
+                //TODO: implement after adding jail functionality
+                response.put("type", "gotojail");
 
             case 4: // collect from every other player
+                response.put("type", "collectfromplayers");
+                response.put("text", "Collect $20 from each player!");
 
+                return response;
             case 5: // advance to random tile, if unowned buy, else pay
+                response.put("type", "advancerandomtile");
+                response.put("text", "Advance to a random tile!");
 
+                return response;
             case 6: //  recieve get out of jail free card. do this later.
 
 

@@ -167,6 +167,14 @@ public class GameSocketController {
         if (game == null) return;
         int turnIndex = game.getTurnIndex();
         String currentUsername = game.getPlayerUsernames().get(game.getTurnIndex());
+
+
+
+        if (msg.get("type").equals("card")) {
+            PlayerState ps = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+            ps.setPosition(newPos);
+        }
+
         gameService.handlePlayerMove(game, newPos, roll);
         //currPlayer.setPosition(newPos);
 
@@ -772,10 +780,60 @@ public class GameSocketController {
         if (player == null) { return; }
         String currentTurnPlayer = game.getPlayerUsernames().get(game.getTurnIndex());
         if (!username.equals(currentTurnPlayer)) { return; }
-
+        
+        ////////////
         if (action.equals("recievemoney")) {
             int money = Integer.parseInt(msg.get("money"));
             player.setMoney(player.getMoney() + money);
+        }
+        else if (action.equals("paymoney")) {
+            System.out.println("Paying money community chest " + username);
+            int money = Integer.parseInt(msg.get("money"));
+            if (player.getMoney() - money <= 0) {
+                player.setMoney(0);
+            }
+            else {
+                player.setMoney(player.getMoney() - money);
+            }
+            TileState freeParking = game.getTileStates().stream().filter(t -> t.getTileName().equals("Free Parking")).findAny().orElse(null);
+            freeParking.setFreeParkingTotal(freeParking.getFreeParkingTotal() + money);
+        }
+        else if (action.equals("advancetogo")) {
+            player.setPosition(0);
+            player.setMoney(player.getMoney() + 200);
+        }
+        else if (action.equals("gotojail")) {
+            //TODO: implement after adding jail functionality
+        }
+        else if (action.equals("collectfromplayers")) {
+            List<PlayerState> otherPlayers = game.getPlayerStates().stream().filter(p -> !p.getUsername().equals(username)).collect(Collectors.toList());
+            for (PlayerState p : otherPlayers) {
+                if (p.getMoney() >= 20) {
+                    p.setMoney(p.getMoney() - 20);
+                    player.setMoney(player.getMoney() + 20);
+                }
+                else {
+                    player.setMoney(player.getMoney() + p.getMoney());
+                    p.setMoney(0);
+                }
+            }
+        }
+        else if (action.equals("advancerandomtile")) {
+            int currPlayerPos = player.getPosition();
+            int randomPos = (int)(Math.random() * 40);
+            Map<String, String> dummyMsg = new HashMap<>();
+            
+
+            dummyMsg.put("username", username);
+            dummyMsg.put("gameId", gameId);
+            dummyMsg.put("newPosition", Integer.toString(randomPos));
+            dummyMsg.put("roll", Integer.toString(Math.abs(randomPos - currPlayerPos)));
+            dummyMsg.put("type", "card");
+
+            handlePlayerLanding(dummyMsg);
+        }
+        else if (action.equals("getoutofjailfree")) {
+
         }
 
         System.out.println(">>>>> Backend: calling postMoveState for " + username);
