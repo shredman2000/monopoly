@@ -65,7 +65,9 @@ public class GameService {
         int totalPlayers = game.getPlayerUsernames().size();
         int nextTurnIndex = (currentTurn + 1) % totalPlayers;
         game.setTurnIndex(nextTurnIndex);
-
+        
+        PlayerState ps = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+        
         // Clear current player's roll status
         game.getPlayerStates().stream()
             .filter(player -> player.getUsername().equals(username))
@@ -83,7 +85,13 @@ public class GameService {
             .findFirst()
             .ifPresent(p -> p.setCanRoll(true));
 
+        PlayerState ps2 = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+        System.out.println(">>> finalizeTurn ps id: " + ps2.getId() + " at hashCode: " + ps2.hashCode());
+        System.out.println(">>> finalizeTurn ps position: " + ps2.getPosition());
+
+
         gameRepository.save(game);
+        System.out.println("<<<<<<<< LOGGING position in FINALIZE TURN position = " + ps.getPosition());
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + game.getGameId(), game);
     }
 
@@ -418,7 +426,7 @@ public class GameService {
                 break;
         }
         
-        
+        System.out.println("<<<<<<<<<<<<<<<<< LOGGING PLAYERS POSITION AT THE BOTTOM OF handlePlayerMove current position = " + ps.getPosition());
         System.out.println("Sending tile action: " + response);
         messagingTemplate.convertAndSend("/topic/tileAction/" + game.getGameId(), response);
     }

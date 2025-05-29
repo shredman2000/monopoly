@@ -171,14 +171,30 @@ public class GameSocketController {
 
 
         if (msg.get("type").equals("card")) {
-            PlayerState ps = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(username)).findFirst().orElse(null);
+            System.out.println("<<<<<<<<<<<<<<<<<<< REACHED THE SPOT IN handlePlayerLanding where we should be updating the players position");
+            PlayerState ps = game.getPlayerStates().stream().filter(p -> p.getUsername().equals(currentUsername)).findFirst().orElse(null);
+            System.out.println("<<<<<<<<<<<<<<<<<<<<< ps username = " + ps.getUsername() + 
+                "|||and currentUsername = " + currentUsername + "||||||| and username = " + username);
+            System.out.println("BEFORE SET: position = " + ps.getPosition());
             ps.setPosition(newPos);
+            System.out.println("AFTER SET: position = " + ps.getPosition());
+            System.out.println("AND newPos is supposed to be:" + newPos );
+            System.out.println(">>> ps id: " + ps.getId() + " at hashCode: " + ps.hashCode());
+
+            gameRepository.save(game);
+
         }
 
         gameService.handlePlayerMove(game, newPos, roll);
         //currPlayer.setPosition(newPos);
 
         gameRepository.save(game);
+
+        gameRepository.flush();
+        PlayerState confirm = game.getPlayerStates().stream()
+            .filter(p -> p.getUsername().equals(username))
+            .findFirst().orElse(null);
+        System.out.println(">>> Confirmed saved position: " + confirm.getPosition());
 
         messagingTemplate.convertAndSend("/topic/gameUpdates/" + gameId, game);
     }
