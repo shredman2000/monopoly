@@ -500,7 +500,7 @@ public class GameService {
                 response.put("text", "Collect $20 from each player!");
 
                 return response;
-            case 5: // advance to random tile, if unowned buy, else pay
+            case 5: //todo: broken advance to random tile, if unowned buy, else pay
                 response.put("type", "advancerandomtile");
                 response.put("text", "Advance to a random tile!");
 
@@ -510,6 +510,56 @@ public class GameService {
 
             
         }
+        return response;
+    }
+    public Map<String,Object> drawChanceCard(Game game) {
+        Map<String, Object> response = new HashMap<>();
+
+        int chosenCard = 0;
+        response.put("action", "chance");
+        List<String> text = new ArrayList<>();
+
+
+        switch (chosenCard){
+            case 0: // advance to go
+                response.put("type", "advancetogo");
+                text.add("You catch a slipstream and advance to Go!");
+                response.put("text", text.get(0));
+
+            case 1: // advance to reading railroad, if cross go receive 200
+                response.put("type", "advancetoRR");
+                text.add("Take a ride on Reading Railroad!");
+                text.add("Advance to Reading Railroad");
+                text.add("If you pass go, collect $200!");
+                response.put("text", text);
+
+            case 2: // advance to illinois ave
+                response.put("type", "advancetoIllinoisAve");
+                response.put("text", "Advance to Illinois Ave!");
+            case 3:// advance to st chrales place
+                response.put("type", "advancetoStCharlesPlace");
+                response.put("text", "Advance to St. Charles Place!");
+            case 4:// advance to nearest utility
+
+            case 5:// advance to nearest railroad
+            
+            case 6:// bank pays 50 dollars
+                response.put("type", "recieve50");
+                response.put("text", "The bank pays you $50!");
+            case 7:// TODO: get out of jail free card
+
+            case 8:// go back 3 spaces
+                response.put("type", "goback3spaces");
+                response.put("text", "Tragedy occurs, retreat 3 spaces!");
+            case 9:// TODO: go to jail
+            case 10: // Make repairs on you property, 25 for each house, 100 for each hotel
+            // advance to boardwalk
+            // Pay each player 50 
+            // recieve 150
+
+        }
+
+
         return response;
     }
 
