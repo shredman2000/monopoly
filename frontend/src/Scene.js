@@ -11,7 +11,8 @@ import PassedGo from './components/PassedGo';
 import WebSocketService from './WebSocketService';
 import PostMovePanel from './components/PostMovePanel';
 import TradePlayerPanel from './components/TradePlayerPanel';
-import CommunityChestCard from './components/CommunityChestCard'
+import CommunityChestCard from './components/CommunityChestCard';
+import AdminPanel from './components/AdminPanel';
 
 
 import useBoardScene from './hooks/useBoardScene';
@@ -25,7 +26,7 @@ import './scene.css';
 import TradePanel from './components/TradePanel';
 function Scene() {
   const mountRef = useRef(null);
-  const { gameId, username } = useLocation().state || {};
+  const { gameId, username, devMode } = useLocation().state || {};
   const [selectedTile, setSelectedTile] = useState(null);
   const [miniBoardRef, miniBoardSize] = useSquareSize();
   const [canTrade, setCanTrade] = useState(null);
@@ -34,6 +35,7 @@ function Scene() {
   const [tradeState, setTradeState] = useState(null);
   const [chanceResponse, setChanceResponse] = useState(null);
   const [communityChestResponse, setCommunityChestResponse] = useState(null);
+  
 
   const {
     turnIndex,
@@ -100,9 +102,16 @@ function Scene() {
   const handleRollDice = () => {
     if (canRoll) {
       WebSocketService.send('/app/rollDice', { gameId, username });
+      console.log("devMode =", devMode);
       setHasRolled(true);
     }
   };
+
+  const handleDevRoll = () => {
+    if (canRoll) {
+
+    }
+  }
 
   useEffect(() => {
     if (!selectedTile || !gameState?.tileStates) { return };
@@ -124,26 +133,48 @@ function Scene() {
       )}
 
 
-      {canRoll && !currentTileOptions && !inPostMoveState && !communityChestResponse && (
-        <button
-          onClick={handleRollDice}
-          style={{
-            position: 'absolute',
-            bottom: '2rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '1rem 2rem',
-            fontSize: '1.2rem',
-            backgroundColor: '#007BFF',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            zIndex: 10,
-          }}
-        >
-          Roll Dice
-        </button>
+      {(canRoll || devMode) && !currentTileOptions && !inPostMoveState && !communityChestResponse && (
+        <>
+          <button
+            onClick={handleRollDice}
+            style={{
+              position: 'absolute',
+              bottom: '2rem',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              padding: '1rem 2rem',
+              fontSize: '1.2rem',
+              backgroundColor: '#007BFF',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              zIndex: 10,
+            }}
+          >
+            Roll Dice
+          </button>
+          {(devMode &&
+            <button 
+              onClick={handleDevRoll}
+              style={{
+                position: 'absolute',
+                  bottom: '2rem',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  padding: '1rem 2rem',
+                  fontSize: '1.2rem',
+                  backgroundColor: '#007BFF',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  zIndex: 10,
+              }}
+            >
+            </button>
+          )}
+        </>
       )}
 
       {['property', 'railroad', 'utility'].includes(currentTileOptions?.type) && (

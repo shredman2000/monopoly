@@ -28,10 +28,18 @@ public class GameService {
         this.gameRepository = gameRepository;
     }
 
-    public Game createNewGame(String username) {
+    public Game createNewGame(String username, GameSettings gameSettings) {
         Game game = new Game();
         game.setAdmin(username);
         game.addPlayer(username);
+        if (gameSettings.getDevMode()) {
+            List<String> playerUsernames = gameSettings.getPlayerUsernames();
+            for (int i = 1; i <= gameSettings.getNumPlayers(); i++) {
+                game.addPlayer(playerUsernames.get(i));
+            }
+            game.setDevMode(true);
+        }
+        
 
         List<TileState> tiles = boardInitializer.createTiles(game);
         game.setTileStates(tiles);

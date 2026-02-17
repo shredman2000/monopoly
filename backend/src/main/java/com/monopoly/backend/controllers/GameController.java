@@ -1,8 +1,6 @@
 package com.monopoly.backend.controllers;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.catalina.connector.Response;
 import org.springframework.http.ResponseEntity;
@@ -41,10 +39,29 @@ public class GameController {
     @CrossOrigin(origins = "http://localhost:3000")
     @PostMapping("/createGame")
     public ResponseEntity<GameCreatedMessage> createGame(@RequestBody GameSettings gameSettings) {
-        String hostUsername = gameSettings.getPlayerUsernames().get(0);
-
+        String hostUsername;
+        System.out.println("USING GAMECONTROLLER CREATE GAME");
+        
+        Boolean devMode = gameSettings.getDevMode();
+        System.out.println("Dev Mode: " + devMode);
+        
+        System.out.println("Player usernames (pre-loop): " + gameSettings.getPlayerUsernames());
+        if (devMode) {
+            List<String> botNames = new ArrayList<>();
+            botNames.add("DEV");
+            for (int i = 1; i <= gameSettings.getNumPlayers() + 1; i++) {
+                botNames.add("BOT-" + i);
+            }
+            gameSettings.setPlayerUsernames(botNames);
+            hostUsername = "DEV";
+        }
+        else {
+            hostUsername = gameSettings.getPlayerUsernames().get(0);
+        }
+        System.out.println("Requested Num Players: " + gameSettings.getNumPlayers());
+        System.out.println("Player usernames (Post bot creation): " + gameSettings.getPlayerUsernames());
         // check for the right number of players being passed, failsafe
-        Game game = gameService.createNewGame(hostUsername);
+        Game game = gameService.createNewGame(hostUsername, gameSettings);
 
         gameRepository.save(game);
 

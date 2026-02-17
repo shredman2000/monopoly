@@ -25,6 +25,7 @@ public class Game {
     private int turnIndex; // whose turn it is
     private boolean started;
     private Boolean postMove = false;
+    private Boolean devMode = false;
 
     public String adminUsername;
 
@@ -142,5 +143,12 @@ public class Game {
 
     public void setTradeState(TradeState tradeState) {
         this.tradeState = tradeState;
+    }
+
+    public void setDevMode(Boolean devMode) {
+        this.devMode = devMode;
+    }
+    public Boolean getDevMode() {
+        return devMode;
     }
 }

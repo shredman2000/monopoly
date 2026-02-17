@@ -9,6 +9,8 @@ function MainMenu() {
   const [username, setUsername] = useState('');
   const [joinUsername, setJoinUsername] = useState('');
   const [gameId, setGameId] = useState('');
+  const [devMode, setDevMode] = useState(false);
+  const [sliderVal, setSliderVal] = useState(0);
 
   useEffect(() => {
     const width = mountRef.current.clientWidth;
@@ -52,15 +54,30 @@ function MainMenu() {
 
   const handleCreateGame = async () => {
     try {
-      const response = await fetch('http://localhost:8080/games/createGame', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          numPlayers: 1,
-          playerUsernames: [username],
-        }),
-      });
-
+      let response = null;
+      if (devMode) {
+        setUsername("DEV");
+        response = await fetch('http://localhost:8080/games/createGame', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            numPlayers: sliderVal,
+            playerUsernames: [username],
+            devMode: devMode,
+          }),
+        });
+      }
+      else {
+        response = await fetch('http://localhost:8080/games/createGame', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            numPlayers: 1,
+            playerUsernames: [username],
+            devMode: devMode
+          }),
+        });
+      }
       if (!response.ok) {
         const errorText = await response.text();
         alert(`Error: ${errorText}`);
@@ -68,7 +85,7 @@ function MainMenu() {
       }
 
       const data = await response.json();
-      navigate('/waiting', { state: { gameId: data.gameId, username } });
+      navigate('/waiting', { state: { gameId: data.gameId, username, devMode } });
     } catch (error) {
       alert('Failed to create game');
       console.error(error);
@@ -91,14 +108,16 @@ function MainMenu() {
         alert(`Error: ${errorText}`);
         return;
       }
-
+      
       navigate('/waiting', { state: { gameId, username: joinUsername } });
     } catch (error) {
       alert('Failed to join game');
       console.error(error);
     }
   };
-
+  const updateSliderVal = (e) => {
+    setSliderVal(e.target.value);
+  }
   return (
     <>
       <div
@@ -170,6 +189,15 @@ function MainMenu() {
           <button onClick={handleCreateGame} style={{ ...buttonStyle, backgroundColor: '#4CAF50' }}>
             Create
           </button>
+          <button onClick={() => setDevMode(true)} style={{backgroundColor: 'grey'}}>Dev Mode</button>
+
+          {devMode && (
+            <div>
+              <input type="range" id="addplayers" min={0} max={5} value={sliderVal} onChange={updateSliderVal}/>
+              
+              <label for="addplayers">Add Players <output>{sliderVal}</output></label>
+            </div>
+          )}
         </div>
       </div>
     </>

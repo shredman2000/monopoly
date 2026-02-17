@@ -5,14 +5,16 @@ import java.util.List;
 public class GameSettings {
     private List<String> playerUsernames;
     private int numPlayers;
+    private Boolean devMode;
 
     public GameSettings() {}
 
-    public GameSettings(List<String> playerUsernames, int numPlayers) {
+    public GameSettings(List<String> playerUsernames, int numPlayers, Boolean devMode) {
         this.playerUsernames = playerUsernames;
         this.numPlayers = numPlayers;
+        this.devMode = devMode;
     }
-
+    
     public List<String> getPlayerUsernames() {
         return playerUsernames;
     }
@@ -27,5 +29,12 @@ public class GameSettings {
 
     public void setNumPlayers(int numPlayers) {
         this.numPlayers = numPlayers;
+    }
+
+    public Boolean getDevMode() {
+        return devMode;
+    }
+    public void setDevMode(Boolean devMode) {
+        this.devMode = devMode;
     }
 }

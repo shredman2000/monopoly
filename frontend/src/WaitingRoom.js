@@ -8,9 +8,10 @@ function WaitingRoom() {
   const mountRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { gameId, username } = location.state || {};
+  const { gameId, username, devMode } = location.state || {};
   const [players, setPlayers] = useState([]);
   const [admin, setAdmin] = useState(null);
+  //const [devMode, setDevMode] = useState(false);
 
   useEffect(() => {
     //console.log("Players state updated:", players);
@@ -31,14 +32,14 @@ function WaitingRoom() {
 
 
       WebSocketService.subscribe(`/topic/lobby/${gameId}`, (updatedPlayers) => {
-        console.log("💡 Players from server:", updatedPlayers);
+        console.log("Players from server:", updatedPlayers);
         setPlayers(updatedPlayers); // assuming backend sends player list
       });
       setTimeout(() => {
         WebSocketService.send(`/app/getLobbyPlayers`, { gameId });
       }, 100);
       WebSocketService.subscribe(`/topic/start/${gameId}`, () => {
-        navigate('/scene', { state: { gameId, username } });
+        navigate('/scene', { state: { gameId, username, devMode } });
       });
 
       WebSocketService.send(`/app/joinLobby`, { gameId, username });
@@ -110,7 +111,7 @@ function WaitingRoom() {
         <ul>
           {(players).map((username, i) => ( <li key={i}> {username} {username === admin && <strong>(ADMIN)</strong>}</li> ))}
         </ul>
-        {username === admin && (
+        {(username === admin || devMode ) && (
           <button onClick={handleStartGame}>Start Game</button> // only show start button to admin
         )}
       </div>
