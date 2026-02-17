@@ -13,22 +13,20 @@ import PostMovePanel from './components/PostMovePanel';
 import TradePlayerPanel from './components/TradePlayerPanel';
 import CommunityChestCard from './components/CommunityChestCard';
 import AdminPanel from './components/AdminPanel';
+import BoardComponent from './components/BoardComponent';
 
-
-import useBoardScene from './hooks/useBoardScene';
 import usePlayerState from './hooks/usePlayerState';
 import useGameSocket from './hooks/useGameSocket';
 import MiniBoard from './components/MiniBoard';
 import TileDetailsPanel from './components/TileDetailsPanel';
-import { useSquareSize } from './hooks/useSquareSize';
 
 import './scene.css';
 import TradePanel from './components/TradePanel';
 function Scene() {
-  const mountRef = useRef(null);
+
   const { gameId, username, devMode } = useLocation().state || {};
   const [selectedTile, setSelectedTile] = useState(null);
-  const [miniBoardRef, miniBoardSize] = useSquareSize();
+  const [miniBoardRef, miniBoardSize] = useState(null); // fix_______________________
   const [canTrade, setCanTrade] = useState(null);
   const [trading, setTrading] = useState(null);
   const [tradingPlayer, setTradingPlayer] = useState(null);
@@ -69,8 +67,7 @@ function Scene() {
 
   } = usePlayerState(username);
 
-  // create board camera and scene stuff
-  const { sceneRef, cameraRef, boardRef } = useBoardScene(mountRef);
+
 
   useGameSocket({
     gameId,
@@ -89,9 +86,6 @@ function Scene() {
     setInPostMoveState,
     setCanRoll,
     playerMapRef,
-    sceneRef,
-    cameraRef,
-    boardRef,
     setGameState,
     setTradeState,
     setCommunityChestResponse,
@@ -123,7 +117,9 @@ function Scene() {
 
   return (
     <>
-      <div ref={mountRef} style={{ width: '100vw', height: '100vh', overflow: 'hidden' }} />
+      <div className='scene-root'>
+        <BoardComponent gameState={gameState}/>
+      </div>
 
       {communityChestResponse && (
           <CommunityChestCard

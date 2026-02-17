@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import WebSocketService from '../WebSocketService';
-import { GamePiece } from '../GamePiece';
-import * as THREE from 'three';
+
 
 export default function useGameSocket({
   gameId,
@@ -47,6 +46,7 @@ export default function useGameSocket({
         }
 
         game.playerStates.forEach((player, index) => {
+          /*
           let piece = playerMapRef.current[player.username];
           if (!piece) {
             piece = new GamePiece(new THREE.Color(player.color));
@@ -63,6 +63,7 @@ export default function useGameSocket({
             cameraRef.current.position.set(pos.x + 5, pos.y + 10, pos.z + 5);
             cameraRef.current.lookAt(pos);
           }
+          */
         });
 
         const currentPlayer = game.playerStates.find(p => p.username === username);
@@ -85,14 +86,14 @@ export default function useGameSocket({
 
         const isMe = rolledUser === username;
         if (!isMe) return;
-
+        /*
         const piece = playerMapRef.current[rolledUser];
         const index = playerUsernames.indexOf(rolledUser);
         const tilePos = boardRef.current.tilePositions[newPosition];
         const offset = new THREE.Vector3(index * 0.4, 0.2, 0);
         const pos = new THREE.Vector3().copy(tilePos).add(offset);
         if (piece) piece.moveTo(pos);
-
+        */
         WebSocketService.send('/app/handlePlayerLanding', {
           gameId: gameId.toString(),
           username: rolledUser,

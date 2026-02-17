@@ -36,3 +36,22 @@
     transform: rotate(360deg);
   }
 }
+.app-background {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(161deg,rgba(2, 0, 36, 1) 0%, rgba(9, 9, 121, 1) 96%, rgba(0, 212, 255, 1) 100%);
+  background-size: 400% 400%;
+  display: flex;
+  flex-direction: column;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% { background-position:0% 50%; }
+  50% { background-position:100% 50%; }
+  100% { background-position:0% 50%; }
+}
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}

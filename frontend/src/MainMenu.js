@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as THREE from 'three';
-import { BoardObject } from './BoardObject';
+
 
 function MainMenu() {
   const mountRef = useRef(null);
@@ -13,43 +12,7 @@ function MainMenu() {
   const [sliderVal, setSliderVal] = useState(0);
 
   useEffect(() => {
-    const width = mountRef.current.clientWidth;
-    const height = mountRef.current.clientHeight;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.set(10, 10, 10);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(width, height);
-    mountRef.current.appendChild(renderer.domElement);
-
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 10, 7.5);
-    scene.add(light);
-
-    const board = new BoardObject();
-    board.getObject3D().rotation.x = -Math.PI / 2;
-    scene.add(board.getObject3D());
-
-    const clock = new THREE.Clock();
-    const animate = () => {
-      requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const radius = 15;
-      camera.position.x = Math.cos(elapsed * 0.2) * radius;
-      camera.position.z = Math.sin(elapsed * 0.2) * radius;
-      camera.lookAt(0, 0, 0);
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    return () => {
-      if (mountRef.current && renderer.domElement.parentNode) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-    };
   }, []);
 
   const handleCreateGame = async () => {
@@ -120,10 +83,7 @@ function MainMenu() {
   }
   return (
     <>
-      <div
-        ref={mountRef}
-        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0 }}
-      />
+
       <div
         style={{
           position: 'absolute',
