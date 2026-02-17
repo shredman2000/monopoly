@@ -33,6 +33,8 @@ function Scene() {
   const [tradeState, setTradeState] = useState(null);
   const [chanceResponse, setChanceResponse] = useState(null);
   const [communityChestResponse, setCommunityChestResponse] = useState(null);
+  const [moving, setMoving] = useState(false);
+  const [latestRoll, setLatestRoll] = useState(null);
   
 
   const {
@@ -90,7 +92,8 @@ function Scene() {
     setTradeState,
     setCommunityChestResponse,
     setChanceResponse,
-    turnIndex
+    turnIndex,
+    setLatestRoll
   });
 
   const handleRollDice = () => {
@@ -98,6 +101,7 @@ function Scene() {
       WebSocketService.send('/app/rollDice', { gameId, username });
       console.log("devMode =", devMode);
       setHasRolled(true);
+      setMoving(true);
     }
   };
 
@@ -118,7 +122,15 @@ function Scene() {
   return (
     <>
       <div className='scene-root'>
-        <BoardComponent gameState={gameState}/>
+        <BoardComponent 
+          gameState={gameState}
+          roll={latestRoll}
+          onMoveComplete={() => {
+              setMoving(false)
+              setLatestRoll(null)
+            }
+          }
+        />
       </div>
 
       {communityChestResponse && (
@@ -173,7 +185,7 @@ function Scene() {
         </>
       )}
 
-      {['property', 'railroad', 'utility'].includes(currentTileOptions?.type) && (
+      {['property', 'railroad', 'utility'].includes(currentTileOptions?.type) && moving === false && (
         <BuyPropertyPrompt
           tileName={currentTileOptions.name}
           price={currentTileOptions.price}
@@ -210,7 +222,7 @@ function Scene() {
 
 
       
-    {inPostMoveState && (
+    {inPostMoveState && !moving && (
       <div className="scene-overlay-grid">
         <div
         ref={miniBoardRef}

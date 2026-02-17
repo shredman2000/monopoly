@@ -27,6 +27,7 @@ export default function useGameSocket({
   setTradeState,
   setChanceResponse,
   setCommunityChestResponse,
+  setLatestRoll
 }) {
   useEffect(() => {
     if (!gameId || !username) return;
@@ -86,6 +87,7 @@ export default function useGameSocket({
 
         const isMe = rolledUser === username;
         if (!isMe) return;
+        setLatestRoll({player: rolledUser, steps: roll, newPosition})
         /*
         const piece = playerMapRef.current[rolledUser];
         const index = playerUsernames.indexOf(rolledUser);

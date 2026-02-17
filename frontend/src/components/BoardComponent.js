@@ -1,10 +1,11 @@
 import React, {useRef, useEffect, useState } from 'react';
 import './BoardComponent.css';
 
-function BoardComponent({ gameState }) {
-
+function BoardComponent({ gameState, onMoveComplete, roll }) {
+    const [moving, setMoving] = useState(false);
     const boardRef = useRef();
     const [tilePositions, setTilePositions] = useState([]);
+
     const tileData = [
         { name: "GO", color: null },
         { name: "Mediterranean Avenue", color: "#8B4513" },
@@ -86,7 +87,70 @@ function BoardComponent({ gameState }) {
         setTilePositions(coords);
 
     }, [])
+
+
+    const handleTransitionEnd = () => {
+        setMoving(false);
+        if (onMoveComplete) { onMoveComplete(); }
+    }
+
+    const [animatedPositions, setAnimatedPositions] = useState({}); // username = current tile id
+
+    // Initialize animated positions
+    useEffect(() => {
+        if (!tilePositions.length) return;
+
+
+        setAnimatedPositions(prev => {
+            if (Object.keys(prev).length > 0) return prev;
+
+            const initPos = {};
+            gameState?.playerStates?.forEach(p => {
+                initPos[p.username] = p.position;
+            });
+            return initPos;
+        });
+    }, [tilePositions, gameState]);
+
     
+    useEffect(() => {
+        if (!roll || !tilePositions.length) return;
+
+        const { player, newPosition } = roll;
+        const currentPos = animatedPositions[player];
+        if (currentPos === undefined || currentPos === -1) return;
+
+        const steps = [];
+        const tiles = (newPosition - currentPos + 40) % 40;
+        for (let i = 1; i <= tiles; i++) {
+            steps.push((currentPos + i) % 40);
+        }
+
+        let stepIndex = 0;
+
+        const moveStep = () => {
+            if (stepIndex >= steps.length) return;
+            setAnimatedPositions(prev => ({
+            ...prev,
+            [player]: steps[stepIndex]
+            }));
+            stepIndex++;
+        };
+
+
+        moveStep();
+
+        const interval = setInterval(() => {
+            if (stepIndex >= steps.length) {
+            clearInterval(interval);
+            return;
+            }
+            moveStep();
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, [roll, tilePositions]);
+
     return (
     <div>
             <div className='board-wrapper' ref={boardRef}>
@@ -108,15 +172,15 @@ function BoardComponent({ gameState }) {
                                 position: 'relative'
                             }}
                         >
-                        {tile.name}
+                            <div className='tile-name'>{tile.name}</div>
                         </div>
                     )
                 })}
                 <div className='player-overlay'>
                     <div className='player-piece'></div>
                     {tilePositions.length > 0 && gameState?.playerStates?.map((player, idx) => {
-                        const tileIdx = player.position;
-                        if (tileIdx === -1) { 
+                        const tileIdx = animatedPositions[player.username]
+                        if (tileIdx === undefined || tileIdx === -1) { 
                             console.log("exiting from tileIdx being -1");
                             return null; 
                         }
@@ -135,7 +199,14 @@ function BoardComponent({ gameState }) {
                                     left: `${x}px`,
                                     top: `${y}px`,
                                     transform: 'translate(-50%, -50%)',
-                                    transition: 'all 0.3s ease',
+                                    transition: 'all 0.3s ease'
+
+                                }}
+                                onTransitionStart={() => setMoving(true)}
+                                onTransitionEnd={() => {
+                                    if (animatedPositions[player.username] === roll.newPosition) {
+                                        onMoveComplete();
+                                    }
                                 }}
                                 title={player.username}
                             />
